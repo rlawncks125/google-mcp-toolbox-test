@@ -1,0 +1,162 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [{"asDropdown": false, "icon": "arrow-left", "includeVars": false, "keepTime": true, "tags": [], "targetBlank": false, "title": "Multi-DB Overview", "type": "link", "url": "/d/mcp-toolbox-multidb"}],
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "mappings": [{"options": {"0": {"color": "red", "text": "DOWN"}, "1": {"color": "green", "text": "UP"}}, "type": "value"}], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0}, "id": 1,
+      "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "max(redis_up)", "legendFormat": "Redis", "range": true, "refId": "A"}],
+      "title": "상태", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}, "id": 2,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "redis_connected_clients", "legendFormat": "clients", "range": true, "refId": "A"}],
+      "title": "연결 Client", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0}, "id": 3,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "rate(redis_commands_processed_total[5m])", "legendFormat": "commands/s", "range": true, "refId": "A"}],
+      "title": "Command/s", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "yellow", "value": 0.8}, {"color": "green", "value": 0.95}]}, "unit": "percentunit"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0}, "id": 4,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "redis_keyspace_hits_total / clamp_min(redis_keyspace_hits_total + redis_keyspace_misses_total, 1)", "legendFormat": "hit ratio", "range": true, "refId": "A"}],
+      "title": "Cache Hit Ratio", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0}, "id": 5,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "redis_memory_used_bytes", "legendFormat": "used", "range": true, "refId": "A"}],
+      "title": "사용 메모리", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1.5}, {"color": "red", "value": 2}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0}, "id": 6,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "redis_mem_fragmentation_ratio", "legendFormat": "ratio", "range": true, "refId": "A"}],
+      "title": "Memory Fragmentation", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}, "id": 7,
+      "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"editorMode": "code", "expr": "sum by (cmd) (rate(redis_commands_total[5m]))", "legendFormat": "{{cmd}}", "range": true, "refId": "A"}],
+      "title": "Command별 처리율", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}, "id": 8,
+      "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"editorMode": "code", "expr": "sum by (cmd) (rate(redis_commands_duration_seconds_total[5m])) / clamp_min(sum by (cmd) (rate(redis_commands_total[5m])), 1e-9)", "legendFormat": "{{cmd}}", "range": true, "refId": "A"}],
+      "title": "Command 평균 지연", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}, "id": 9,
+      "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "sum by (cmd) (rate(redis_commands_failed_calls_total[5m]))", "legendFormat": "{{cmd}} failed", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "sum by (cmd) (rate(redis_commands_rejected_calls_total[5m]))", "legendFormat": "{{cmd}} rejected", "range": true, "refId": "B"}
+      ],
+      "title": "Command 오류 및 거부", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "bytes"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}, "id": 10,
+      "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "redis_memory_used_bytes", "legendFormat": "used", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "redis_memory_used_rss_bytes", "legendFormat": "RSS", "range": true, "refId": "B"},
+        {"editorMode": "code", "expr": "redis_memory_max_bytes > 0", "legendFormat": "maxmemory", "range": true, "refId": "C"}
+      ],
+      "title": "Memory 사용량", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20}, "id": 11,
+      "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "redis_db_keys", "legendFormat": "{{db}} keys", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "redis_db_keys_expiring", "legendFormat": "{{db}} expiring", "range": true, "refId": "B"}
+      ],
+      "title": "Keyspace", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}, "id": 12,
+      "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "rate(redis_keyspace_hits_total[5m])", "legendFormat": "hit", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "rate(redis_keyspace_misses_total[5m])", "legendFormat": "miss", "range": true, "refId": "B"},
+        {"editorMode": "code", "expr": "rate(redis_evicted_keys_total[5m])", "legendFormat": "evicted", "range": true, "refId": "C"},
+        {"editorMode": "code", "expr": "rate(redis_expired_keys_total[5m])", "legendFormat": "expired", "range": true, "refId": "D"}
+      ],
+      "title": "Hit/Miss/Eviction/Expiration", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "Bps"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28}, "id": 13,
+      "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "rate(redis_net_input_bytes_total[5m])", "legendFormat": "input", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "rate(redis_net_output_bytes_total[5m])", "legendFormat": "output", "range": true, "refId": "B"}
+      ],
+      "title": "Network I/O", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28}, "id": 14,
+      "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [
+        {"editorMode": "code", "expr": "redis_blocked_clients", "legendFormat": "blocked clients", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "redis_slowlog_length", "legendFormat": "slowlog", "range": true, "refId": "B"},
+        {"editorMode": "code", "expr": "redis_aof_pending_bio_fsync", "legendFormat": "AOF pending fsync", "range": true, "refId": "C"},
+        {"editorMode": "code", "expr": "redis_rdb_changes_since_last_save", "legendFormat": "RDB unsaved changes", "range": true, "refId": "D"}
+      ],
+      "title": "지연 및 영속성 이상 징후", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "loki", "uid": "loki"},
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 36}, "id": 15,
+      "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": true, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true},
+      "targets": [{"editorMode": "code", "expr": "{service=\"redis\"}", "queryType": "range", "refId": "A"}],
+      "title": "Redis 로그", "type": "logs"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 41,
+  "tags": ["mcp", "redis", "cache", "deep-dive"],
+  "templating": {"list": []},
+  "time": {"from": "now-6h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "MCP Toolbox / Redis Deep Dive",
+  "uid": "mcp-redis-deep-dive",
+  "version": 1,
+  "weekStart": ""
+}

@@ -1,0 +1,3 @@
+# Connection credentials are supplied with DATA_SOURCE_* environment variables.
+# Keeping an explicit empty auth-module map avoids an optional-config warning.
+auth_modules: {}

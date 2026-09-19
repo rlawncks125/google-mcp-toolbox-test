@@ -1,0 +1,147 @@
+kind: source
+name: monitored-postgres
+type: postgres
+host: ${DB_HOST:postgres}
+port: ${DB_PORT:5432}
+database: ${DB_NAME:app}
+user: ${TOOLBOX_DB_USER}
+password: ${TOOLBOX_DB_PASSWORD}
+queryParams:
+  sslmode: ${DB_SSLMODE:disable}
+sqlCommenter: true
+connectTimeout: 5
+---
+kind: source
+name: monitored-redis
+type: redis
+address:
+  - ${REDIS_HOST:redis}:${REDIS_PORT:6379}
+password: ${REDIS_PASSWORD}
+---
+kind: source
+name: monitored-mongodb
+type: mongodb
+uri: mongodb://${MONGO_TOOLBOX_USER}:${MONGO_TOOLBOX_PASSWORD}@${MONGO_HOST:mongodb}:${MONGO_PORT:27017}/admin?authSource=admin
+---
+kind: tool
+name: database_overview
+type: postgres-database-overview
+source: monitored-postgres
+description: 현재 PostgreSQL 버전, 가동 시간, 복제 여부와 연결 사용률을 조회합니다.
+---
+kind: tool
+name: list_active_queries
+type: postgres-list-active-queries
+source: monitored-postgres
+description: 실행 중인 쿼리와 대기 이벤트를 오래 실행된 순서로 조회합니다.
+---
+kind: tool
+name: long_running_transactions
+type: postgres-long-running-transactions
+source: monitored-postgres
+description: 지정한 시간보다 오래 열린 트랜잭션을 조회합니다.
+---
+kind: tool
+name: list_locks
+type: postgres-list-locks
+source: monitored-postgres
+description: 현재 잠금과 잠금 보유 또는 대기 중인 세션을 조회합니다.
+---
+kind: tool
+name: list_database_stats
+type: postgres-list-database-stats
+source: monitored-postgres
+description: 데이터베이스별 연결, 커밋, 롤백, 블록 읽기와 캐시 적중 통계를 조회합니다.
+---
+kind: tool
+name: list_query_stats
+type: postgres-list-query-stats
+source: monitored-postgres
+description: pg_stat_statements에서 누적 실행 시간이 큰 쿼리를 조회합니다.
+---
+kind: tool
+name: list_table_stats
+type: postgres-list-table-stats
+source: monitored-postgres
+description: 테이블별 스캔, 변경 행, vacuum 및 analyze 통계를 조회합니다.
+---
+kind: tool
+name: redis_overview
+type: redis
+source: monitored-redis
+description: Redis 응답, 서버, 연결, 메모리, 처리량, 영속성, 복제 및 keyspace 상태를 조회합니다.
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+  idempotentHint: true
+commands:
+  - [PING]
+  - [INFO, server]
+  - [INFO, clients]
+  - [INFO, memory]
+  - [INFO, stats]
+  - [INFO, persistence]
+  - [INFO, replication]
+  - [INFO, keyspace]
+---
+kind: tool
+name: redis_slowlog
+type: redis
+source: monitored-redis
+description: Redis의 최근 slow log 최대 20건을 조회합니다.
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+  idempotentHint: true
+commands:
+  - [SLOWLOG, GET, "20"]
+---
+kind: tool
+name: redis_latency
+type: redis
+source: monitored-redis
+description: Redis latency monitor가 기록한 최신 지연 이벤트를 조회합니다.
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+  idempotentHint: true
+commands:
+  - [LATENCY, LATEST]
+---
+kind: tool
+name: mongo_recent_health_events
+type: mongodb-find
+source: monitored-mongodb
+description: MongoDB에 기록된 최근 상태 이벤트를 조회합니다.
+database: ${MONGO_DATABASE:app}
+collection: health_events
+filterPayload: '{}'
+sortPayload: '{"createdAt":-1}'
+limit: 20
+---
+kind: tool
+name: mongo_health_event_summary
+type: mongodb-aggregate
+source: monitored-mongodb
+description: MongoDB 상태 이벤트를 상태별로 집계합니다.
+database: ${MONGO_DATABASE:app}
+collection: health_events
+readOnly: true
+pipelinePayload: '[{"$group":{"_id":"$status","count":{"$sum":1}}},{"$sort":{"count":-1}}]'
+pipelineParams: []
+---
+kind: toolset
+name: db-observability
+tools:
+  - database_overview
+  - list_active_queries
+  - long_running_transactions
+  - list_locks
+  - list_database_stats
+  - list_query_stats
+  - list_table_stats
+  - redis_overview
+  - redis_slowlog
+  - redis_latency
+  - mongo_recent_health_events
+  - mongo_health_event_summary
