@@ -17,7 +17,7 @@
       "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
       "id": 1,
       "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "max(pg_up{db_instance=~\"$postgres_instance\"})", "legendFormat": "PostgreSQL", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "max(pg_up{juchan_kind=\"db-status\",db_instance=~\"$postgres_instance\"})", "legendFormat": "PostgreSQL", "range": true, "refId": "A"}],
       "title": "PostgreSQL", "type": "stat"
     },
     {
@@ -26,7 +26,7 @@
       "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
       "id": 2,
       "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "max(redis_up{db_instance=~\"$redis_instance\"})", "legendFormat": "Redis", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "max(redis_up{juchan_kind=\"db-status\",db_instance=~\"$redis_instance\"})", "legendFormat": "Redis", "range": true, "refId": "A"}],
       "title": "Redis", "type": "stat"
     },
     {
@@ -35,7 +35,7 @@
       "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0},
       "id": 3,
       "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "max(mongodb_up{db_instance=~\"$mongodb_instance\"})", "legendFormat": "MongoDB", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "max(mongodb_up{juchan_kind=\"db-status\",db_instance=~\"$mongodb_instance\"})", "legendFormat": "MongoDB", "range": true, "refId": "A"}],
       "title": "MongoDB", "type": "stat"
     },
     {
@@ -44,7 +44,7 @@
       "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0},
       "id": 4,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "sum(pg_stat_database_numbackends{db_instance=~\"$postgres_instance\",datname!~\"template.*\"})", "legendFormat": "connections", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(pg_stat_database_numbackends{juchan_kind=\"db-status\",db_instance=~\"$postgres_instance\",datname!~\"template.*\"})", "legendFormat": "connections", "range": true, "refId": "A"}],
       "title": "PostgreSQL 연결", "type": "stat"
     },
     {
@@ -53,7 +53,7 @@
       "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
       "id": 5,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "redis_connected_clients{db_instance=~\"$redis_instance\"}", "legendFormat": "clients", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "redis_connected_clients{juchan_kind=\"db-status\",db_instance=~\"$redis_instance\"}", "legendFormat": "clients", "range": true, "refId": "A"}],
       "title": "Redis 클라이언트", "type": "stat"
     },
     {
@@ -62,7 +62,7 @@
       "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0},
       "id": 6,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "mongodb_ss_connections{db_instance=~\"$mongodb_instance\",conn_type=\"current\"}", "legendFormat": "connections", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "mongodb_ss_connections{juchan_kind=\"db-status\",db_instance=~\"$mongodb_instance\",conn_type=\"current\"}", "legendFormat": "connections", "range": true, "refId": "A"}],
       "title": "MongoDB 연결", "type": "stat"
     },
     {
@@ -71,7 +71,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
       "id": 7,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "redis_memory_used_bytes{db_instance=~\"$redis_instance\"}", "legendFormat": "used", "range": true, "refId": "A"}, {"editorMode": "code", "expr": "redis_memory_max_bytes{db_instance=~\"$redis_instance\"} > 0", "legendFormat": "max", "range": true, "refId": "B"}],
+      "targets": [{"editorMode": "code", "expr": "redis_memory_used_bytes{juchan_kind=\"db-status\",db_instance=~\"$redis_instance\"}", "legendFormat": "used", "range": true, "refId": "A"}, {"editorMode": "code", "expr": "redis_memory_max_bytes{juchan_kind=\"db-status\",db_instance=~\"$redis_instance\"} > 0", "legendFormat": "max", "range": true, "refId": "B"}],
       "title": "Redis 메모리", "type": "timeseries"
     },
     {
@@ -80,7 +80,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
       "id": 8,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "mongodb_ss_connections{db_instance=~\"$mongodb_instance\",conn_type=~\"current|active|rejected\"}", "legendFormat": "{{conn_type}}", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "mongodb_ss_connections{juchan_kind=\"db-status\",db_instance=~\"$mongodb_instance\",conn_type=~\"current|active|rejected\"}", "legendFormat": "{{conn_type}}", "range": true, "refId": "A"}],
       "title": "MongoDB 연결 상태", "type": "timeseries"
     },
     {
@@ -89,7 +89,7 @@
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 12},
       "id": 9,
       "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "sum by (gen_ai_tool_name) (rate(mcp_server_operation_duration_seconds_count{mcp_method_name=\"tools/call\"}[5m]))", "legendFormat": "{{gen_ai_tool_name}}", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum by (gen_ai_tool_name) (rate(mcp_server_operation_duration_seconds_count{juchan_kind=\"toolbox\",mcp_method_name=\"tools/call\"}[5m]))", "legendFormat": "{{gen_ai_tool_name}}", "range": true, "refId": "A"}],
       "title": "MCP Tool별 실행률", "type": "timeseries"
     },
     {
@@ -97,7 +97,7 @@
       "gridPos": {"h": 9, "w": 24, "x": 0, "y": 20},
       "id": 10,
       "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": true, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true},
-      "targets": [{"editorMode": "code", "expr": "{service=~\"toolbox|postgres|redis|mongodb\"} | db_instance=~\"^$|$postgres_instance|$redis_instance|$mongodb_instance\"", "queryType": "range", "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "{service=~\"toolbox|postgres|redis|mongodb\",juchan_kind=~\"toolbox|db-status\"} | db_instance=~\"^$|$postgres_instance|$redis_instance|$mongodb_instance\"", "queryType": "range", "refId": "A"}],
       "title": "DB 및 Toolbox 로그", "type": "logs"
     }
   ],
@@ -109,13 +109,13 @@
       {
         "current": {"selected": false, "text": "postgres-1", "value": "postgres-1"},
         "datasource": {"type": "prometheus", "uid": "prometheus"},
-        "definition": "label_values(pg_up, db_instance)",
+        "definition": "label_values(pg_up{juchan_kind=\"db-status\"}, db_instance)",
         "includeAll": false,
         "label": "PostgreSQL Instance",
         "multi": false,
         "name": "postgres_instance",
         "options": [],
-        "query": {"query": "label_values(pg_up, db_instance)", "refId": "StandardVariableQuery"},
+        "query": {"query": "label_values(pg_up{juchan_kind=\"db-status\"}, db_instance)", "refId": "StandardVariableQuery"},
         "refresh": 1,
         "regex": "",
         "sort": 1,
@@ -124,13 +124,13 @@
       {
         "current": {"selected": false, "text": "redis-1", "value": "redis-1"},
         "datasource": {"type": "prometheus", "uid": "prometheus"},
-        "definition": "label_values(redis_up, db_instance)",
+        "definition": "label_values(redis_up{juchan_kind=\"db-status\"}, db_instance)",
         "includeAll": false,
         "label": "Redis Instance",
         "multi": false,
         "name": "redis_instance",
         "options": [],
-        "query": {"query": "label_values(redis_up, db_instance)", "refId": "StandardVariableQuery"},
+        "query": {"query": "label_values(redis_up{juchan_kind=\"db-status\"}, db_instance)", "refId": "StandardVariableQuery"},
         "refresh": 1,
         "regex": "",
         "sort": 1,
@@ -139,13 +139,13 @@
       {
         "current": {"selected": false, "text": "mongodb-1", "value": "mongodb-1"},
         "datasource": {"type": "prometheus", "uid": "prometheus"},
-        "definition": "label_values(mongodb_up, db_instance)",
+        "definition": "label_values(mongodb_up{juchan_kind=\"db-status\"}, db_instance)",
         "includeAll": false,
         "label": "MongoDB Instance",
         "multi": false,
         "name": "mongodb_instance",
         "options": [],
-        "query": {"query": "label_values(mongodb_up, db_instance)", "refId": "StandardVariableQuery"},
+        "query": {"query": "label_values(mongodb_up{juchan_kind=\"db-status\"}, db_instance)", "refId": "StandardVariableQuery"},
         "refresh": 1,
         "regex": "",
         "sort": 1,

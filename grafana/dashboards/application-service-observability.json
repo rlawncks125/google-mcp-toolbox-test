@@ -37,7 +37,7 @@
       "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
       "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}, "id": 4,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le) (rate(app_db_client_operation_duration_seconds_bucket{service_name=~\"$service\"}[5m]))) or vector(0)", "legendFormat": "p95", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le) (rate(app_db_client_operation_duration_seconds_bucket{juchan_kind=\"db-status\",service_name=~\"$service\"}[5m]))) or vector(0)", "legendFormat": "p95", "range": true, "refId": "A"}],
       "title": "DB 작업 p95", "type": "stat"
     },
     {
@@ -61,7 +61,7 @@
       "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
       "gridPos": {"h": 9, "w": 24, "x": 0, "y": 12}, "id": 7,
       "options": {"legend": {"calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le, db_system_name, db_operation_name, db_query_summary) (rate(app_db_client_operation_duration_seconds_bucket{service_name=~\"$service\"}[5m])))", "legendFormat": "{{db_system_name}} · {{db_operation_name}} · {{db_query_summary}}", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le, db_system_name, db_operation_name, db_query_summary) (rate(app_db_client_operation_duration_seconds_bucket{juchan_kind=\"db-status\",service_name=~\"$service\"}[5m])))", "legendFormat": "{{db_system_name}} · {{db_operation_name}} · {{db_query_summary}}", "range": true, "refId": "A"}],
       "title": "DB별·작업별 p95", "type": "timeseries"
     },
     {
@@ -69,7 +69,7 @@
       "fieldConfig": {"defaults": {}, "overrides": []},
       "gridPos": {"h": 9, "w": 24, "x": 0, "y": 21}, "id": 8,
       "options": {"cellHeight": "sm", "showHeader": true},
-      "targets": [{"datasource": {"type": "jaeger", "uid": "jaeger"}, "limit": 50, "maxDuration": "", "minDuration": "", "operation": "", "queryType": "search", "refId": "A", "service": "$service", "tags": ""}],
+      "targets": [{"datasource": {"type": "jaeger", "uid": "jaeger"}, "limit": 50, "maxDuration": "", "minDuration": "", "operation": "", "queryType": "search", "refId": "A", "service": "$service", "tags": "juchan-kind=db-status"}],
       "title": "최근 요청 Trace — HTTP → DB span", "type": "table"
     },
     {

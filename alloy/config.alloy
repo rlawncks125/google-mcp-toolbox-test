@@ -51,6 +51,12 @@ discovery.relabel "observed_containers" {
     target_label  = "environment"
   }
 
+  // Trace의 juchan-kind와 같은 분류를 Loki label 규칙에 맞춰 저장합니다.
+  rule {
+    source_labels = ["__meta_docker_container_label_observability_juchan_kind"]
+    target_label  = "juchan_kind"
+  }
+
   rule {
     source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
     target_label  = "compose_project"

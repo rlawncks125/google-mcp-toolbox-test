@@ -15,6 +15,16 @@ processors:
     check_interval: 1s
     limit_mib: 256
     spike_limit_mib: 64
+  transform/juchan-kind:
+    error_mode: ignore
+    trace_statements:
+      # 일반 service span은 기존 외부 SDK의 분류를 유지합니다.
+      - set(span.attributes["juchan-kind"], "toolbox") where resource.attributes["service.name"] == "toolbox-db-observer"
+      - set(span.attributes["juchan-kind"], "db-status") where span.attributes["db.system.name"] != nil or span.attributes["db.system"] != nil
+    metric_statements:
+      # Prometheus label 이름은 호환성을 위해 underscore를 사용합니다.
+      - set(datapoint.attributes["juchan_kind"], "toolbox") where resource.attributes["service.name"] == "toolbox-db-observer"
+      - set(datapoint.attributes["juchan_kind"], "db-status") where IsMatch(metric.name, "^app\\.db\\.")
   batch:
     timeout: 5s
     send_batch_size: 1024
@@ -36,14 +46,13 @@ service:
   pipelines:
     metrics:
       receivers: [otlp]
-      processors: [memory_limiter, batch]
+      processors: [memory_limiter, transform/juchan-kind, batch]
       exporters: [prometheus]
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, batch]
+      processors: [memory_limiter, transform/juchan-kind, batch]
       exporters: [otlp/jaeger]
     logs:
       receivers: [otlp]
       processors: [memory_limiter, batch]
       exporters: [otlphttp/loki]
-

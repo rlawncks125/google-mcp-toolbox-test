@@ -25,13 +25,23 @@ DB 메트릭과 컨테이너 로그는 다음 네 라벨을 공통 식별자로 
 | `db_role` | `primary` | primary, replica 같은 역할 |
 | `environment` | `local` | local, dev, stage, prod 환경 |
 
+기존 Prometheus·Loki·Jaeger 환경과 합칠 때는 이 프로젝트 전용 분류값도 함께 사용합니다.
+
+| 신호 | Toolbox | DB 상태·DB client | 일반 service |
+|---|---|---|---|
+| Jaeger span | `juchan-kind=toolbox` | `juchan-kind=db-status` | 이 프로젝트에서 설정하지 않음 |
+| Prometheus metric | `juchan_kind=toolbox` | `juchan_kind=db-status` | 이 프로젝트에서 설정하지 않음 |
+| Loki log | `juchan_kind=toolbox` | `juchan_kind=db-status` | 이 프로젝트에서 설정하지 않음 |
+
+하이픈이 있는 `juchan-kind`는 OTel span 속성이고, underscore 형태인 `juchan_kind`는 Prometheus·Loki label입니다. 이 저장소의 대시보드와 alert rule은 해당 값을 고정 필터로 사용하므로 같은 metric·service 이름이 다른 시스템에 있어도 섞이지 않습니다.
+
 Overview에는 DB 종류별 Instance 선택기가 있고, PostgreSQL·Redis·MongoDB Deep Dive에는 `DB Instance` 선택기가 있습니다. Overview에서 Deep Dive 링크를 누르면 선택한 인스턴스가 함께 전달됩니다.
 
 같은 종류의 DB를 추가할 때는 다음을 함께 추가합니다.
 
 1. DB와 exporter 서비스를 고유한 Compose service 이름으로 추가합니다.
-2. `prometheus/prometheus.yml`의 같은 `job_name`에 exporter target과 네 식별 라벨을 추가합니다.
-3. DB 컨테이너에 `observability.service_name`과 `observability.db_*` 라벨을 추가합니다. `service_name`은 DB 종류별로 동일하게 유지하고 `db_instance`만 고유하게 지정합니다.
+2. `prometheus/prometheus.yml`의 같은 `job_name`에 exporter target, 네 식별 라벨과 `juchan_kind: db-status`를 추가합니다.
+3. DB 컨테이너에 `observability.service_name`, `observability.db_*`, `observability.juchan_kind: db-status` 라벨을 추가합니다. `service_name`은 DB 종류별로 동일하게 유지하고 `db_instance`만 고유하게 지정합니다.
 4. Toolbox에는 고유한 source와 tool 이름을 추가합니다. 별도 toolset이 없으므로 기본 `/mcp` endpoint에 자동 노출됩니다.
 
 예를 들어 두 번째 PostgreSQL exporter target은 다음처럼 추가합니다.
@@ -46,6 +56,7 @@ Overview에는 DB 종류별 Instance 선택기가 있고, PostgreSQL·Redis·Mon
         db_instance: orders-postgres-1
         db_role: primary
         environment: prod
+        juchan_kind: db-status
     - targets: ["analytics-postgres-exporter:9187"]
       labels:
         db_system: postgresql
@@ -53,6 +64,7 @@ Overview에는 DB 종류별 Instance 선택기가 있고, PostgreSQL·Redis·Mon
         db_instance: analytics-postgres-1
         db_role: primary
         environment: prod
+        juchan_kind: db-status
 ```
 
 `db_instance` 이름을 변경하면 Prometheus target 라벨과 Compose의 `observability.db_instance` 로그 라벨을 반드시 같은 값으로 맞춥니다.

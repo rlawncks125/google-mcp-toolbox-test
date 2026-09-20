@@ -33,6 +33,7 @@ services:
       observability.db_instance: postgres-1
       observability.db_role: primary
       observability.environment: local
+      observability.juchan_kind: db-status
 
   redis:
     image: redis:${REDIS_VERSION:-7.4-alpine}
@@ -63,6 +64,7 @@ services:
       observability.db_instance: redis-1
       observability.db_role: primary
       observability.environment: local
+      observability.juchan_kind: db-status
 
   mongodb:
     image: mongo:${MONGO_VERSION:-8.0}
@@ -97,6 +99,7 @@ services:
       observability.db_instance: mongodb-1
       observability.db_role: primary
       observability.environment: local
+      observability.juchan_kind: db-status
 
   postgres-app-init:
     image: postgres:${POSTGRES_VERSION:-17-alpine}
@@ -236,6 +239,8 @@ services:
     networks: [observability]
     labels:
       observability.logs: "true"
+      observability.service_name: toolbox
+      observability.juchan_kind: toolbox
 
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter:${POSTGRES_EXPORTER_VERSION:-v0.18.1}

@@ -23,6 +23,7 @@ scrape_configs:
           db_instance: postgres-1
           db_role: primary
           environment: local
+          juchan_kind: db-status
 
   - job_name: redis
     static_configs:
@@ -33,6 +34,7 @@ scrape_configs:
           db_instance: redis-1
           db_role: primary
           environment: local
+          juchan_kind: db-status
 
   - job_name: mongodb
     static_configs:
@@ -43,3 +45,4 @@ scrape_configs:
           db_instance: mongodb-1
           db_role: primary
           environment: local
+          juchan_kind: db-status

@@ -69,6 +69,8 @@ SQL 원문, bind parameter, Redis key/value, MongoDB filter 값은 telemetry에 
 | `service.instance.id` | pod/container ID | 실행 인스턴스 구분 |
 | `deployment.environment.name` | `dev`, `stage`, `prod` | 환경 구분 |
 
+공용 Jaeger에서는 이 프로젝트가 생성한 DB client span을 `juchan-kind=db-status`, Toolbox span을 `juchan-kind=toolbox`로 필터링할 수 있습니다. 일반 service span에는 이 프로젝트가 값을 덮어쓰지 않습니다. Prometheus와 Loki에서는 같은 분류의 label 이름이 `juchan_kind`입니다.
+
 URL의 사용자 ID나 주문 ID를 span 이름과 `http.route`에 넣지 않습니다. `/orders/123` 대신 `/orders/:id`처럼 route template을 사용해야 시계열 cardinality가 증가하지 않습니다.
 
 Compose 환경에서는 Loki의 `service` label도 OTel `service.name`과 같게 맞춥니다.

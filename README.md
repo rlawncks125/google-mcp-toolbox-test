@@ -50,6 +50,8 @@ Overview 상단 링크에서 각 Deep Dive로 이동할 수 있습니다. 초기
 
 DB 메트릭과 로그에는 `db_cluster`, `db_instance`, `db_role`, `environment` 라벨이 함께 붙습니다. 같은 종류의 DB를 추가해도 Overview와 각 Deep Dive 상단의 Instance 선택기로 분리해서 볼 수 있습니다.
 
+기존 관측 환경과 데이터를 합쳐도 출처를 구분할 수 있도록 Toolbox span에는 `juchan-kind=toolbox`, DB 관측·client span에는 `juchan-kind=db-status`를 추가합니다. Prometheus와 Loki는 label 이름 제약에 맞춰 같은 값을 `juchan_kind`로 저장합니다. 일반 service span은 이 프로젝트에서 분류하지 않고 기존 애플리케이션 SDK의 값을 유지합니다.
+
 상세한 panel 해설과 안전한 테스트 workload는 [`docs/DASHBOARD_GUIDE.md`](docs/DASHBOARD_GUIDE.md), 실제 서비스의 HTTP→DB Trace 구성과 서비스 이름 규칙은 [`docs/SERVICE_OBSERVABILITY.md`](docs/SERVICE_OBSERVABILITY.md)를 참고하세요.
 
 예제 Bun 서버를 호출해 서비스와 세 DB의 telemetry를 생성하려면 다음을 실행합니다.
