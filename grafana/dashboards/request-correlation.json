@@ -96,7 +96,7 @@
       "datasource": {"type": "loki", "uid": "loki"},
       "gridPos": {"h": 8, "w": 24, "x": 0, "y": 29}, "id": 11,
       "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true},
-      "targets": [{"editorMode": "code", "expr": "{service=\"toolbox\"} | json status=\"httpRequest.status\", latency=\"httpRequest.latency\", path=\"httpRequest.requestPath\", trace_id=\"logging.googleapis.com/trace\" | path!=\"\" | line_format \"status={{.status}} latency={{.latency}} path={{.path}} trace_id={{.trace_id}}\"", "queryType": "range", "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "{service=\"toolbox\"} | json status=\"httpRequest.status\", latency=\"httpRequest.latency\", path=\"httpRequest.requestPath\" | path!=\"\" | line_format \"status={{.status}} latency={{.latency}} path={{.path}} trace_id={{.trace_id}}\"", "queryType": "range", "refId": "A"}],
       "title": "HTTP access log (보조 자료)", "type": "logs"
     },
     {

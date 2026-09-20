@@ -4,8 +4,7 @@
   "graphTooltip": 1,
   "id": null,
   "links": [
-    {"asDropdown": false, "icon": "arrow-left", "includeVars": false, "keepTime": true, "tags": [], "targetBlank": false, "title": "Multi-DB Overview", "type": "link", "url": "/d/mcp-toolbox-multidb"},
-    {"asDropdown": false, "icon": "external link", "includeVars": false, "keepTime": true, "tags": [], "targetBlank": false, "title": "Selected Query Performance", "type": "link", "url": "/d/mcp-selected-query-performance"}
+    {"asDropdown": false, "icon": "arrow-left", "includeVars": false, "keepTime": true, "tags": [], "targetBlank": false, "title": "Multi-DB Overview", "type": "link", "url": "/d/mcp-toolbox-multidb"}
   ],
   "panels": [
     {
@@ -13,7 +12,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "mappings": [{"options": {"0": {"color": "red", "text": "DOWN"}, "1": {"color": "green", "text": "UP"}}, "type": "value"}], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0}, "id": 1,
       "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "max(pg_up)", "legendFormat": "PostgreSQL", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "max(pg_up{db_instance=~\"$db_instance\"})", "legendFormat": "PostgreSQL", "range": true, "refId": "A"}],
       "title": "상태", "type": "stat"
     },
     {
@@ -21,7 +20,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.7}, {"color": "red", "value": 0.85}]}, "unit": "percentunit"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}, "id": 2,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "sum(pg_stat_database_numbackends{datname!~\"template.*\"}) / clamp_min(max(pg_settings_max_connections), 1)", "legendFormat": "usage", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(pg_stat_database_numbackends{db_instance=~\"$db_instance\",datname!~\"template.*\"}) / clamp_min(max(pg_settings_max_connections{db_instance=~\"$db_instance\"}), 1)", "legendFormat": "usage", "range": true, "refId": "A"}],
       "title": "연결 사용률", "type": "stat"
     },
     {
@@ -29,7 +28,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "unit": "tps"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0}, "id": 3,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "sum(rate(pg_stat_database_xact_commit{datname!~\"template.*\"}[5m])) + sum(rate(pg_stat_database_xact_rollback{datname!~\"template.*\"}[5m]))", "legendFormat": "TPS", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(rate(pg_stat_database_xact_commit{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m])) + sum(rate(pg_stat_database_xact_rollback{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]))", "legendFormat": "TPS", "range": true, "refId": "A"}],
       "title": "Transaction/s", "type": "stat"
     },
     {
@@ -37,7 +36,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.02}, {"color": "red", "value": 0.05}]}, "unit": "percentunit"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0}, "id": 4,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "sum(rate(pg_stat_database_xact_rollback{datname!~\"template.*\"}[5m])) / clamp_min(sum(rate(pg_stat_database_xact_commit{datname!~\"template.*\"}[5m])) + sum(rate(pg_stat_database_xact_rollback{datname!~\"template.*\"}[5m])), 1e-9)", "legendFormat": "rollback ratio", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(rate(pg_stat_database_xact_rollback{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m])) / clamp_min(sum(rate(pg_stat_database_xact_commit{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m])) + sum(rate(pg_stat_database_xact_rollback{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m])), 1e-9)", "legendFormat": "rollback ratio", "range": true, "refId": "A"}],
       "title": "Rollback 비율", "type": "stat"
     },
     {
@@ -45,7 +44,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 30}, {"color": "red", "value": 300}]}, "unit": "s"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0}, "id": 5,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "max(pg_stat_activity_max_tx_duration{datname!~\"template.*\"})", "legendFormat": "oldest", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "max(pg_stat_activity_max_tx_duration{db_instance=~\"$db_instance\",datname!~\"template.*\"})", "legendFormat": "oldest", "range": true, "refId": "A"}],
       "title": "최장 Transaction", "type": "stat"
     },
     {
@@ -53,7 +52,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 10}, {"color": "red", "value": 50}]}, "unit": "short"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0}, "id": 6,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "sum(pg_locks_count{datname!~\"template.*\"})", "legendFormat": "locks", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(pg_locks_count{db_instance=~\"$db_instance\",datname!~\"template.*\"})", "legendFormat": "locks", "range": true, "refId": "A"}],
       "title": "현재 Lock", "type": "stat"
     },
     {
@@ -62,8 +61,8 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}, "id": 7,
       "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "sum by (datname) (rate(pg_stat_database_xact_commit{datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} commit", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "sum by (datname) (rate(pg_stat_database_xact_rollback{datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} rollback", "range": true, "refId": "B"}
+        {"editorMode": "code", "expr": "sum by (datname) (rate(pg_stat_database_xact_commit{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} commit", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "sum by (datname) (rate(pg_stat_database_xact_rollback{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} rollback", "range": true, "refId": "B"}
       ],
       "title": "Transaction 처리율", "type": "timeseries"
     },
@@ -72,7 +71,7 @@
       "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}, "id": 8,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "sum by (state) (pg_stat_activity_count{datname!~\"template.*\",state!~\"disabled|fastpath function call\"})", "legendFormat": "{{state}}", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum by (state) (pg_stat_activity_count{db_instance=~\"$db_instance\",datname!~\"template.*\",state!~\"disabled|fastpath function call\"})", "legendFormat": "{{state}}", "range": true, "refId": "A"}],
       "title": "세션 상태", "type": "timeseries"
     },
     {
@@ -81,9 +80,9 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}, "id": 9,
       "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "sum(rate(pg_stat_database_tup_inserted{datname!~\"template.*\"}[5m]))", "legendFormat": "insert", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "sum(rate(pg_stat_database_tup_updated{datname!~\"template.*\"}[5m]))", "legendFormat": "update", "range": true, "refId": "B"},
-        {"editorMode": "code", "expr": "sum(rate(pg_stat_database_tup_deleted{datname!~\"template.*\"}[5m]))", "legendFormat": "delete", "range": true, "refId": "C"}
+        {"editorMode": "code", "expr": "sum(rate(pg_stat_database_tup_inserted{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]))", "legendFormat": "insert", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "sum(rate(pg_stat_database_tup_updated{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]))", "legendFormat": "update", "range": true, "refId": "B"},
+        {"editorMode": "code", "expr": "sum(rate(pg_stat_database_tup_deleted{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]))", "legendFormat": "delete", "range": true, "refId": "C"}
       ],
       "title": "Row 변경률", "type": "timeseries"
     },
@@ -92,7 +91,7 @@
       "fieldConfig": {"defaults": {"min": 0, "max": 1, "unit": "percentunit"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}, "id": 10,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "sum by (datname) (rate(pg_stat_database_blks_hit{datname!~\"template.*\"}[5m])) / clamp_min(sum by (datname) (rate(pg_stat_database_blks_hit{datname!~\"template.*\"}[5m]) + rate(pg_stat_database_blks_read{datname!~\"template.*\"}[5m])), 1e-9)", "legendFormat": "{{datname}}", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum by (datname) (rate(pg_stat_database_blks_hit{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m])) / clamp_min(sum by (datname) (rate(pg_stat_database_blks_hit{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]) + rate(pg_stat_database_blks_read{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m])), 1e-9)", "legendFormat": "{{datname}}", "range": true, "refId": "A"}],
       "title": "Buffer Cache Hit Ratio", "type": "timeseries"
     },
     {
@@ -100,7 +99,7 @@
       "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20}, "id": 11,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "sum by (mode) (pg_locks_count{datname!~\"template.*\"})", "legendFormat": "{{mode}}", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum by (mode) (pg_locks_count{db_instance=~\"$db_instance\",datname!~\"template.*\"})", "legendFormat": "{{mode}}", "range": true, "refId": "A"}],
       "title": "Lock Mode", "type": "timeseries"
     },
     {
@@ -109,8 +108,8 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}, "id": 12,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "pg_database_size_bytes{datname!~\"template.*\"}", "legendFormat": "{{datname}} size", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "sum by (datname) (increase(pg_stat_database_temp_bytes{datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} temp/5m", "range": true, "refId": "B"}
+        {"editorMode": "code", "expr": "pg_database_size_bytes{db_instance=~\"$db_instance\",datname!~\"template.*\"}", "legendFormat": "{{datname}} size", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "sum by (datname) (increase(pg_stat_database_temp_bytes{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} temp/5m", "range": true, "refId": "B"}
       ],
       "title": "DB 크기 및 Temp 사용", "type": "timeseries"
     },
@@ -120,8 +119,8 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28}, "id": 13,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "sum by (datname) (increase(pg_stat_database_deadlocks{datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} deadlock", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "sum by (datname) (increase(pg_stat_database_conflicts{datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} conflict", "range": true, "refId": "B"}
+        {"editorMode": "code", "expr": "sum by (datname) (increase(pg_stat_database_deadlocks{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} deadlock", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "sum by (datname) (increase(pg_stat_database_conflicts{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m]))", "legendFormat": "{{datname}} conflict", "range": true, "refId": "B"}
       ],
       "title": "Deadlock 및 Conflict (5분)", "type": "timeseries"
     },
@@ -129,14 +128,32 @@
       "datasource": {"type": "loki", "uid": "loki"},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28}, "id": 14,
       "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": true, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true},
-      "targets": [{"editorMode": "code", "expr": "{service=\"postgres\"}", "queryType": "range", "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "{service=\"postgres\",db_instance=~\"$db_instance\"}", "queryType": "range", "refId": "A"}],
       "title": "PostgreSQL 로그", "type": "logs"
     }
   ],
   "refresh": "15s",
   "schemaVersion": 41,
   "tags": ["mcp", "postgresql", "transactions", "deep-dive"],
-  "templating": {"list": []},
+  "templating": {
+    "list": [
+      {
+        "current": {"selected": false, "text": "postgres-1", "value": "postgres-1"},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values(pg_up, db_instance)",
+        "includeAll": false,
+        "label": "DB Instance",
+        "multi": false,
+        "name": "db_instance",
+        "options": [],
+        "query": {"query": "label_values(pg_up, db_instance)", "refId": "StandardVariableQuery"},
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "time": {"from": "now-6h", "to": "now"},
   "timepicker": {},
   "timezone": "browser",

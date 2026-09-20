@@ -15,7 +15,7 @@
       "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0},
       "id": 1,
       "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
-      "targets": [{"editorMode": "code", "expr": "max(pg_up)", "legendFormat": "PostgreSQL", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "max(pg_up{db_instance=~\"$db_instance\"})", "legendFormat": "PostgreSQL", "range": true, "refId": "A"}],
       "title": "PostgreSQL 상태",
       "type": "stat"
     },
@@ -25,7 +25,7 @@
       "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0},
       "id": 2,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
-      "targets": [{"editorMode": "code", "expr": "sum(pg_stat_database_numbackends{datname!~\"template.*\"})", "legendFormat": "connections", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(pg_stat_database_numbackends{db_instance=~\"$db_instance\",datname!~\"template.*\"})", "legendFormat": "connections", "range": true, "refId": "A"}],
       "title": "DB 연결 수",
       "type": "stat"
     },
@@ -55,7 +55,7 @@
       "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0},
       "id": 5,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto", "wideLayout": true},
-      "targets": [{"editorMode": "code", "expr": "sum(increase(pg_stat_database_deadlocks{datname!~\"template.*\"}[1h]))", "legendFormat": "deadlocks", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(increase(pg_stat_database_deadlocks{db_instance=~\"$db_instance\",datname!~\"template.*\"}[1h]))", "legendFormat": "deadlocks", "range": true, "refId": "A"}],
       "title": "최근 1시간 Deadlock",
       "type": "stat"
     },
@@ -75,7 +75,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
       "id": 7,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "pg_stat_database_numbackends{datname!~\"template.*\"}", "legendFormat": "{{datname}}", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "pg_stat_database_numbackends{db_instance=~\"$db_instance\",datname!~\"template.*\"}", "legendFormat": "{{datname}}", "range": true, "refId": "A"}],
       "title": "데이터베이스별 연결",
       "type": "timeseries"
     },
@@ -95,7 +95,7 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
       "id": 9,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "sum(rate(pg_stat_database_blks_hit{datname!~\"template.*\"}[5m])) / clamp_min(sum(rate(pg_stat_database_blks_hit{datname!~\"template.*\"}[5m])) + sum(rate(pg_stat_database_blks_read{datname!~\"template.*\"}[5m])), 1e-9)", "legendFormat": "cache hit ratio", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(rate(pg_stat_database_blks_hit{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m])) / clamp_min(sum(rate(pg_stat_database_blks_hit{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m])) + sum(rate(pg_stat_database_blks_read{db_instance=~\"$db_instance\",datname!~\"template.*\"}[5m])), 1e-9)", "legendFormat": "cache hit ratio", "range": true, "refId": "A"}],
       "title": "DB Buffer Cache Hit Ratio",
       "type": "timeseries"
     },
@@ -122,7 +122,25 @@
   "refresh": "15s",
   "schemaVersion": 41,
   "tags": ["mcp", "toolbox", "postgresql", "observability"],
-  "templating": {"list": []},
+  "templating": {
+    "list": [
+      {
+        "current": {"selected": false, "text": "postgres-1", "value": "postgres-1"},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values(pg_up, db_instance)",
+        "includeAll": false,
+        "label": "PostgreSQL Instance",
+        "multi": false,
+        "name": "db_instance",
+        "options": [],
+        "query": {"query": "label_values(pg_up, db_instance)", "refId": "StandardVariableQuery"},
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "time": {"from": "now-1h", "to": "now"},
   "timepicker": {},
   "timezone": "browser",

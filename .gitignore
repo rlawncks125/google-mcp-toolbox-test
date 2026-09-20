@@ -1,2 +1,70 @@
+# Environment variables and local secrets
 .env
+.env.*
+!.env.example
+*.local
+secrets/
+credentials*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
 
+# JavaScript / TypeScript dependencies and generated output
+node_modules/
+**/node_modules/
+.bun/
+dist/
+build/
+coverage/
+.cache/
+.turbo/
+*.tsbuildinfo
+
+# Logs, process files, and temporary files
+*.log
+logs/
+*.pid
+*.pid.lock
+tmp/
+.tmp/
+.temp/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+bun-error.log*
+
+# Local Docker overrides and bind-mounted runtime data
+docker-compose.override.yml
+docker-compose.override.yaml
+compose.override.yml
+compose.override.yaml
+postgres-data/
+redis-data/
+mongodb-data/
+grafana-data/
+prometheus-data/
+loki-data/
+jaeger-data/
+
+# Local MCP / agent configuration
+.mcp.json
+.codex/
+.claude/
+.cursor/
+
+# IDE and operating-system files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Local backups
+*.bak
+*.backup

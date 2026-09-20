@@ -8,6 +8,7 @@ Google MCP Toolbox로 PostgreSQL, Redis, MongoDB 상태를 대화형으로 점�
 |---|---|
 | MCP Toolbox | 세 DB의 제한된 상태 조회 도구 제공, MCP 요청/도구 실행 metric·trace 생성 |
 | OpenTelemetry Collector | Toolbox의 OTLP metric·trace를 중앙 수집 및 라우팅 |
+| Bun demo API | 실제 HTTP 요청에서 PostgreSQL·Redis·MongoDB 호출 span과 metric 생성 |
 | DB exporters | PostgreSQL, Redis, MongoDB 엔진 상태를 Prometheus metric으로 변환 |
 | Prometheus | Toolbox/DB metric 저장, alert rule 평가 |
 | Jaeger | 분산 trace 저장 및 조회 |
@@ -29,7 +30,8 @@ make up
 
 접속 주소:
 
-- Toolbox MCP: `http://127.0.0.1:5000/mcp/db-observability`
+- Toolbox MCP (같은 호스트): `http://127.0.0.1:5000/mcp`
+- Toolbox MCP (LAN의 다른 agent): `http://172.30.1.63:5000/mcp`
 - Grafana: `http://127.0.0.1:3000`
 - Prometheus: `http://127.0.0.1:9090`
 - Jaeger: `http://127.0.0.1:16686`
@@ -39,47 +41,63 @@ Grafana에는 다음 대시보드와 Prometheus, Loki, Jaeger 데이터 소스�
 - `MCP Toolbox / Multi-DB Overview`: 세 DB 가용성과 핵심 지표 요약
 - `MCP Toolbox / Request Correlation`: 동시 요청을 trace ID별로 분리하고 요청별 duration과 Tool latency 확인
 - `MCP Toolbox / PostgreSQL Deep Dive`: transaction, rollback, 장기 transaction, session, lock, row 변경, cache hit, temp I/O, deadlock
-- `MCP Toolbox / Selected Query Performance`: allowlist에 등록한 PostgreSQL `queryid`의 호출률, 평균 실행시간, rows/call, block I/O
 - `MCP Toolbox / Redis Deep Dive`: command 처리율/지연/오류, memory, keyspace, hit/miss, eviction, persistence
 - `MCP Toolbox / MongoDB Deep Dive`: operation/지연, application transaction, WiredTiger ticket/cache, lock queue, 저장공간
 - `MCP Toolbox / PostgreSQL Overview`: 기존 PostgreSQL 및 MCP 실행 지표
+- `Application / Service & DB Tracing`: 서비스별 HTTP 요청과 PostgreSQL·Redis·MongoDB client span의 지연 비교
 
 Overview 상단 링크에서 각 Deep Dive로 이동할 수 있습니다. 초기 Grafana 계정은 `.env`의 `GRAFANA_ADMIN_USER`와 `GRAFANA_ADMIN_PASSWORD`입니다.
 
-상세한 panel 해설과 안전한 테스트 workload는 [`docs/DASHBOARD_GUIDE.md`](docs/DASHBOARD_GUIDE.md), query ID 추가·삭제 및 dashboard 변경 절차는 [`docs/QUERY_MONITORING.md`](docs/QUERY_MONITORING.md)를 참고하세요.
+DB 메트릭과 로그에는 `db_cluster`, `db_instance`, `db_role`, `environment` 라벨이 함께 붙습니다. 같은 종류의 DB를 추가해도 Overview와 각 Deep Dive 상단의 Instance 선택기로 분리해서 볼 수 있습니다.
+
+상세한 panel 해설과 안전한 테스트 workload는 [`docs/DASHBOARD_GUIDE.md`](docs/DASHBOARD_GUIDE.md), 실제 서비스의 HTTP→DB Trace 구성과 서비스 이름 규칙은 [`docs/SERVICE_OBSERVABILITY.md`](docs/SERVICE_OBSERVABILITY.md)를 참고하세요.
+
+예제 Bun 서버를 호출해 서비스와 세 DB의 telemetry를 생성하려면 다음을 실행합니다.
+
+```bash
+make demo-service
+```
+
+API는 `http://127.0.0.1:3001`에서 제공되며, Grafana의 `Application / Service & DB Tracing`과 Jaeger의 `demo-api` 서비스에서 결과를 확인할 수 있습니다.
 
 MCP 클라이언트 예시:
 
 ```json
 {
   "mcpServers": {
-    "db-observability": {
+    "database": {
       "type": "http",
-      "url": "http://127.0.0.1:5000/mcp/db-observability"
+      "url": "http://172.30.1.63:5000/mcp"
     }
   }
 }
 ```
 
+모니터링 도구와 `demo.orders` 행 조회 도구를 모두 이 endpoint에서 제공합니다. 기능 테스트를 위해 schema 탐색용 `list_tables`와 범용 SQL 조회용 `execute_query`도 제공합니다. `execute_query`는 `toolbox_reader`의 DB 권한으로 현재 `demo` schema에 존재하는 모든 테이블을 조회할 수 있지만, PostgreSQL role의 `default_transaction_read_only=on`과 `statement_timeout=5s`로 쓰기와 장시간 실행을 제한합니다. 새 테이블을 추가한 뒤 `postgres-app-init`을 다시 실행하면 해당 테이블의 조회 권한도 반영됩니다.
+
+`/mcp`는 설정된 모든 도구를 노출하는 단일 endpoint입니다. 도구별 실제 접근 범위는 각 source가 사용하는 DB 계정 권한으로 제한합니다. `execute_query`는 테스트/개발 환경에서만 사용하고 운영 전에는 제거하거나 인증된 별도 환경으로 옮기세요. DDL은 migration/CI, DCL은 DBA 관리 절차에서 수행합니다.
+
 연결 후 다음과 같이 요청할 수 있습니다.
 
 - "현재 DB 연결 사용률과 서버 상태를 보여줘"
 - "5분 넘게 열린 트랜잭션과 대기 중인 lock을 찾아줘"
-- "누적 실행 시간이 큰 쿼리와 테이블 통계를 분석해줘"
+- "현재 실행 중인 작업과 테이블 통계를 분석해줘"
 - "Redis 메모리, 연결, 영속성, 복제 상태와 slow log를 확인해줘"
 - "MongoDB의 최근 health event와 상태별 집계를 보여줘"
 
-등록된 추가 도구는 `redis_overview`, `redis_slowlog`, `redis_latency`, `mongo_recent_health_events`, `mongo_health_event_summary`입니다. 모두 같은 `db-observability` MCP endpoint에서 제공됩니다.
+등록된 추가 도구는 `redis_overview`, `redis_slowlog`, `redis_latency`, `mongo_recent_health_events`, `mongo_health_event_summary`입니다. 모두 같은 `/mcp` endpoint에서 제공됩니다.
 
 ## 보안 기본값
 
-- 전용 `toolbox_reader` 계정은 `default_transaction_read_only=on`, 읽기 권한과 `pg_read_all_stats`만 가집니다.
+- 전용 `toolbox_reader` 계정은 `default_transaction_read_only=on`, `demo` schema 읽기 권한과 `pg_read_all_stats`를 가집니다. schema 전체 조회 권한은 기능 테스트용이며 운영 전 축소해야 합니다.
 - MongoDB의 `toolbox_monitor` 계정은 `clusterMonitor`와 대상 DB의 `read` 역할만 가집니다.
 - Redis는 임의 명령 입력을 받지 않고 설정에 고정된 상태 조회 명령만 Toolbox에 노출합니다. 운영에서는 별도 ACL 사용자도 적용하세요.
-- Toolbox에는 임의 SQL 실행 도구를 노출하지 않고 상태 조회 도구만 등록했습니다.
-- 모든 호스트 포트는 `127.0.0.1`에만 bind합니다.
-- 운영에서는 Toolbox 앞에 TLS/OIDC 인증 reverse proxy를 두고, Docker socket을 읽는 Alloy를 별도 노드 에이전트 권한으로 격리하세요.
-- 쿼리 텍스트가 MCP 응답이나 DB 통계에 포함될 수 있으므로 민감 정보가 SQL literal에 들어가지 않도록 parameterized query를 사용하세요.
+- 기능 테스트를 위해 임의 SQL을 받는 `execute_query`가 등록되어 있습니다. 안내 문구와 annotation은 보안 장치가 아니며, 실제 쓰기 차단은 `toolbox_reader`의 PostgreSQL 권한이 담당합니다.
+- 현재 Toolbox에는 인증 서비스가 없으므로 쓰기 도구와 DDL/DCL 도구를 추가하지 않습니다. 단일 `/mcp` endpoint의 보안 경계는 URL이 아니라 각 source의 DB 계정 권한입니다.
+- DB·Grafana·Prometheus 등 관리 포트는 `127.0.0.1`에만 bind하고, 외부 agent 연결용 Toolbox MCP 포트만 기본값 `0.0.0.0:5000`으로 공개합니다.
+- 외부 agent가 접속할 서버 IP 또는 도메인은 `.env`의 `TOOLBOX_ALLOWED_HOSTS`에 `host:5000` 형식으로 명시적으로 추가합니다.
+- Toolbox에는 자체 인증이 적용되어 있지 않으므로 공개 인터넷에 직접 노출하지 마세요. 운영에서는 방화벽/VPN과 TLS/OIDC 인증 reverse proxy를 앞에 두고, Docker socket을 읽는 Alloy를 별도 노드 에이전트 권한으로 격리하세요.
+- DB query 원문과 parameter는 metric·log에 저장하지 않습니다. `list_active_queries`를 명시적으로 호출하면 현재 실행 중인 SQL이 MCP 응답에 포함될 수 있으므로 민감 값은 parameterized query로 전달하세요.
 
 ## 기존 DB에 연결
 
@@ -103,6 +121,7 @@ GRANT pg_read_all_stats TO toolbox_reader;
 
 - Jaeger를 이미 안정적으로 운영한다면 유지합니다. Grafana 한 화면과 장기 보관을 더 중시하면 Jaeger 대신 Tempo로 단순화할 수 있습니다.
 - Loki는 애플리케이션 로그용입니다. 모든 SQL 본문을 로깅하면 개인정보·credential과 저장 비용 위험이 있으므로 기본 구성에서는 활성화하지 않았습니다.
+- PostgreSQL queryid와 SQL 실행 로그는 상시 수집하지 않습니다. 요청별 DB 호출 시간은 애플리케이션 OTel CLIENT span으로 Jaeger에서 확인합니다.
 - Prometheus alert는 현재 로컬 PostgreSQL의 `max_connections=100`을 가정해 연결 수 임계값을 80으로 뒀습니다. 실제 DB 한도와 SLO에 맞게 수정하세요.
 - 이 Compose는 단일 노드 개발/검증용입니다. 운영에서는 backend별 영속 스토리지, HA, retention, 인증, alert 전달용 Alertmanager가 별도로 필요합니다.
 

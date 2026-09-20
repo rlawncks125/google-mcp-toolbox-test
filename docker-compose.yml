@@ -13,8 +13,6 @@ services:
     command:
       - postgres
       - -c
-      - shared_preload_libraries=pg_stat_statements
-      - -c
       - track_io_timing=on
     volumes:
       - postgres-data:/var/lib/postgresql/data
@@ -29,6 +27,12 @@ services:
     networks: [observability]
     labels:
       observability.logs: "true"
+      observability.service_name: postgres
+      observability.db_system: postgresql
+      observability.db_cluster: local
+      observability.db_instance: postgres-1
+      observability.db_role: primary
+      observability.environment: local
 
   redis:
     image: redis:${REDIS_VERSION:-7.4-alpine}
@@ -53,6 +57,12 @@ services:
     networks: [observability]
     labels:
       observability.logs: "true"
+      observability.service_name: redis
+      observability.db_system: redis
+      observability.db_cluster: local
+      observability.db_instance: redis-1
+      observability.db_role: primary
+      observability.environment: local
 
   mongodb:
     image: mongo:${MONGO_VERSION:-8.0}
@@ -81,6 +91,99 @@ services:
     networks: [observability]
     labels:
       observability.logs: "true"
+      observability.service_name: mongodb
+      observability.db_system: mongodb
+      observability.db_cluster: local
+      observability.db_instance: mongodb-1
+      observability.db_role: primary
+      observability.environment: local
+
+  postgres-app-init:
+    image: postgres:${POSTGRES_VERSION:-17-alpine}
+    restart: "no"
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD:-local-admin-change-me}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_NAME: ${DB_NAME:-app}
+      POSTGRES_USER: postgres
+      APP_DB_USER: ${APP_DB_USER:-demo_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-local-demo-app-change-me}
+      TOOLBOX_DB_USER: ${TOOLBOX_DB_USER:-toolbox_reader}
+      ORDERS_READER_USER: ${ORDERS_READER_USER:-orders_reader}
+      ORDERS_READER_PASSWORD: ${ORDERS_READER_PASSWORD:-local-orders-reader-change-me}
+    command: ["sh", "/bootstrap/postgres.sh"]
+    volumes:
+      - ./demo-server/bootstrap/postgres.sh:/bootstrap/postgres.sh:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [observability]
+
+  mongodb-app-init:
+    image: mongo:${MONGO_VERSION:-8.0}
+    restart: "no"
+    environment:
+      MONGO_DATABASE: ${MONGO_DATABASE:-app}
+      MONGO_APP_USER: ${MONGO_APP_USER:-demo_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-local-demo-mongo-change-me}
+    entrypoint: ["mongosh"]
+    command:
+      - --host
+      - mongodb
+      - --username
+      - ${MONGO_ROOT_USERNAME:-root}
+      - --password
+      - ${MONGO_ROOT_PASSWORD:-local-mongo-root-change-me}
+      - --authenticationDatabase
+      - admin
+      - --file
+      - /bootstrap/mongodb.js
+    volumes:
+      - ./demo-server/bootstrap/mongodb.js:/bootstrap/mongodb.js:ro
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks: [observability]
+
+  demo-api:
+    build:
+      context: ./demo-server
+    restart: unless-stopped
+    environment:
+      PORT: 3001
+      OTEL_SERVICE_NAME: ${DEMO_SERVICE_NAME:-demo-api}
+      OTEL_SERVICE_NAMESPACE: ${OTEL_SERVICE_NAMESPACE:-toolbox-observability}
+      OTEL_SERVICE_VERSION: ${DEMO_SERVICE_VERSION:-0.1.0}
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      DEPLOYMENT_ENVIRONMENT: ${DEPLOYMENT_ENVIRONMENT:-local}
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-app}
+      APP_DB_USER: ${APP_DB_USER:-demo_app}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-local-demo-app-change-me}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-local-redis-change-me}
+      MONGO_HOST: ${MONGO_HOST:-mongodb}
+      MONGO_PORT: ${MONGO_PORT:-27017}
+      MONGO_DATABASE: ${MONGO_DATABASE:-app}
+      MONGO_APP_USER: ${MONGO_APP_USER:-demo_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-local-demo-mongo-change-me}
+    ports:
+      - "127.0.0.1:3001:3001"
+    depends_on:
+      postgres-app-init:
+        condition: service_completed_successfully
+      mongodb-app-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+    networks: [observability]
+    labels:
+      observability.logs: "true"
+      observability.service_name: ${DEMO_SERVICE_NAME:-demo-api}
 
   toolbox:
     image: us-central1-docker.pkg.dev/database-toolbox/toolbox/toolbox:${TOOLBOX_VERSION:-1.11.0}
@@ -91,6 +194,8 @@ services:
       DB_NAME: ${DB_NAME:-app}
       TOOLBOX_DB_USER: ${TOOLBOX_DB_USER:-toolbox_reader}
       TOOLBOX_DB_PASSWORD: ${TOOLBOX_DB_PASSWORD:-local-reader-change-me}
+      ORDERS_READER_USER: ${ORDERS_READER_USER:-orders_reader}
+      ORDERS_READER_PASSWORD: ${ORDERS_READER_PASSWORD:-local-orders-reader-change-me}
       DB_SSLMODE: ${DB_SSLMODE:-disable}
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
@@ -111,14 +216,15 @@ services:
       - --telemetry-service-name=toolbox-db-observer
       - --logging-format=json
       - --log-level=info
-      - --sql-commenter
-      - --allowed-hosts=localhost:5000,127.0.0.1:5000
+      - --allowed-hosts=${TOOLBOX_ALLOWED_HOSTS:-localhost:5000,127.0.0.1:5000,toolbox:5000,172.30.1.63:5000}
       - --allowed-origins=http://localhost:3000,http://127.0.0.1:3000
     volumes:
       - ./toolbox/tools.yaml:/config/tools.yaml:ro
     ports:
-      - "127.0.0.1:5000:5000"
+      - "${TOOLBOX_BIND_ADDRESS:-0.0.0.0}:5000:5000"
     depends_on:
+      postgres-app-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:
@@ -136,7 +242,6 @@ services:
     restart: unless-stopped
     command:
       - --config.file=/etc/postgres_exporter.yml
-      - --collector.stat_statements
       # The read-only monitoring role cannot call pg_ls_waldir(); WAL metrics
       # are outside this dashboard's scope, so keep that collector disabled.
       - --no-collector.wal

@@ -12,15 +12,6 @@ postgres_setup() {
   postgres_psql < examples/postgres/setup.sql
 }
 
-postgres_query() {
-  postgres_setup
-  for _ in $(seq 1 10); do
-    postgres_psql < examples/postgres/selected-query.sql >/dev/null
-  done
-  echo "Demo query executed. Add one of these query IDs to the Prometheus allowlist:"
-  postgres_psql < examples/postgres/find-query-id.sql
-}
-
 postgres_lock() {
   postgres_setup
   echo "Holding a row lock for 30 seconds; open the PostgreSQL dashboard now."
@@ -73,7 +64,7 @@ mongodb_workload() {
 }
 
 mcp_concurrent() {
-  local endpoint="${TOOLBOX_MCP_URL:-http://127.0.0.1:5000/mcp/db-observability}"
+  local endpoint="${TOOLBOX_MCP_URL:-http://127.0.0.1:5000/mcp}"
   local failures=0
   local request_id
   local request_pid
@@ -106,25 +97,22 @@ usage() {
 Usage: ./scripts/run-dashboard-demo.sh COMMAND
 
 Commands:
-  postgres-query        Generate a repeatable 200 ms query and print its queryid
   postgres-lock         Hold a row lock and a waiting UPDATE for 30 seconds
   postgres-transaction  Hold an open transaction for 30 seconds
   redis                 Generate command, cache, slowlog, and blocked-client metrics
   mongodb               Generate read/write/aggregation and storage metrics
   mcp-concurrent         Send 20 concurrent tool calls to verify trace isolation
-  all                   Run query workloads, then the two PostgreSQL waits in parallel
+  all                   Run MCP/DB workloads and the two PostgreSQL waits in parallel
 EOF
 }
 
 case "${1:-}" in
-  postgres-query) postgres_query ;;
   postgres-lock) postgres_lock ;;
   postgres-transaction) postgres_transaction ;;
   redis) redis_workload ;;
   mongodb) mongodb_workload ;;
   mcp-concurrent) mcp_concurrent ;;
   all)
-    postgres_query
     mcp_concurrent
     redis_workload & redis_pid=$!
     mongodb_workload & mongo_pid=$!

@@ -4,15 +4,58 @@
 
 | 명령 | 만들어지는 신호 | 확인할 Dashboard |
 |---|---|---|
-| `make demo-postgres-query` | 약 200ms query 10회, `queryid` 출력 | Selected Query Performance |
 | `make demo-postgres-lock` | 같은 row의 lock holder와 waiter를 30초 유지 | PostgreSQL Deep Dive |
 | `make demo-postgres-transaction` | 열린 transaction을 30초 유지 | PostgreSQL Deep Dive |
 | `make demo-redis` | hit/miss, SET/GET, slowlog, blocked client | Redis Deep Dive |
 | `make demo-mongodb` | find, sort, aggregation, update, storage/cache | MongoDB Deep Dive |
+| `make demo-service` | Bun HTTP 요청에서 PostgreSQL·Redis·MongoDB를 함께 호출 | Application / Service & DB Tracing |
 | `make demo-mcp-concurrent` | MCP Tool 20개 동시 호출, 서로 다른 trace 20개 | Request Correlation |
 | `make demo-all` | 위 workload를 함께 실행 | 모든 Dashboard |
 
 Dashboard scrape 주기는 15초입니다. lock/transaction 테스트는 명령 실행 중에 dashboard를 열어야 값이 보입니다.
+
+## 여러 DB 인스턴스 구분
+
+DB 메트릭과 컨테이너 로그는 다음 네 라벨을 공통 식별자로 사용합니다.
+
+| Label | 현재 예 | 의미 |
+|---|---|---|
+| `db_cluster` | `local` | 같은 논리 DB cluster 묶음 |
+| `db_instance` | `postgres-1`, `redis-1`, `mongodb-1` | 대시보드에서 선택하는 고유 인스턴스 이름 |
+| `db_role` | `primary` | primary, replica 같은 역할 |
+| `environment` | `local` | local, dev, stage, prod 환경 |
+
+Overview에는 DB 종류별 Instance 선택기가 있고, PostgreSQL·Redis·MongoDB Deep Dive에는 `DB Instance` 선택기가 있습니다. Overview에서 Deep Dive 링크를 누르면 선택한 인스턴스가 함께 전달됩니다.
+
+같은 종류의 DB를 추가할 때는 다음을 함께 추가합니다.
+
+1. DB와 exporter 서비스를 고유한 Compose service 이름으로 추가합니다.
+2. `prometheus/prometheus.yml`의 같은 `job_name`에 exporter target과 네 식별 라벨을 추가합니다.
+3. DB 컨테이너에 `observability.service_name`과 `observability.db_*` 라벨을 추가합니다. `service_name`은 DB 종류별로 동일하게 유지하고 `db_instance`만 고유하게 지정합니다.
+4. Toolbox에는 고유한 source와 tool 이름을 추가합니다. 별도 toolset이 없으므로 기본 `/mcp` endpoint에 자동 노출됩니다.
+
+예를 들어 두 번째 PostgreSQL exporter target은 다음처럼 추가합니다.
+
+```yaml
+- job_name: postgres
+  static_configs:
+    - targets: ["postgres-exporter:9187"]
+      labels:
+        db_system: postgresql
+        db_cluster: orders
+        db_instance: orders-postgres-1
+        db_role: primary
+        environment: prod
+    - targets: ["analytics-postgres-exporter:9187"]
+      labels:
+        db_system: postgresql
+        db_cluster: analytics
+        db_instance: analytics-postgres-1
+        db_role: primary
+        environment: prod
+```
+
+`db_instance` 이름을 변경하면 Prometheus target 라벨과 Compose의 `observability.db_instance` 로그 라벨을 반드시 같은 값으로 맞춥니다.
 
 ## Multi-DB Overview
 
@@ -42,7 +85,23 @@ Dashboard scrape 주기는 15초입니다. lock/transaction 테스트는 명령 
 | 최근 요청 — trace별 그룹 | 한 행이 한 trace입니다. Trace ID, 시작시간, 요청 전체 duration을 표시하며 ID를 누르면 span waterfall로 이동합니다. |
 | HTTP access log | status와 HTTP 응답시간을 보여주는 보조 로그입니다. Toolbox access log 자체에는 trace ID가 없으므로 이 로그를 요청 그룹의 기준으로 사용하지 않습니다. |
 
-Loki에는 trace/request ID처럼 값 종류가 많은 필드를 index label로 넣지 않고 structured metadata로 저장합니다. 이는 요청별 검색 기능을 유지하면서 Loki stream cardinality 폭증을 피하기 위한 설정입니다. Toolbox가 trace ID를 포함해 출력한 로그는 해당 trace로 이동할 수 있지만, trace ID가 없는 DB 및 HTTP access log는 선택한 trace 시간 범위의 보조 자료로만 봅니다.
+Loki에는 trace/request ID처럼 값 종류가 많은 필드를 index label로 넣지 않고 structured metadata로 저장합니다. 이는 요청별 검색 기능을 유지하면서 Loki stream cardinality 폭증을 피하기 위한 설정입니다. DB SQL 실행 로그는 수집하지 않으며, Toolbox의 DB 호출 세부 시간은 Tool span 범위로 확인합니다.
+
+## Application / Service & DB Tracing
+
+Toolbox가 아닌 실제 애플리케이션 요청을 `service.name`별로 조회합니다. 상단 `Service` 변수로 서비스를 고른 뒤 HTTP 지연과 그 요청이 호출한 DB client 지연을 비교합니다.
+
+| Panel | 의미와 해석 |
+|---|---|
+| 요청률 / HTTP p95 / 오류율 | 선택 서비스의 트래픽, tail latency, 5xx 비율입니다. |
+| DB 작업 p95 | 해당 서비스가 실행한 모든 DB client 작업의 p95입니다. HTTP p95와 차이가 크면 DB 외 로직도 확인합니다. |
+| 라우트별 요청률 | 실제 URL이 아닌 route template별 트래픽입니다. |
+| 라우트별 HTTP p95 | 어느 API가 느린지 비교합니다. |
+| DB별·작업별 p95 | `db.system.name`, operation, 고정 query summary별 지연입니다. 병목 DB 후보를 고르는 핵심 패널입니다. |
+| 최근 요청 Trace | HTTP SERVER span과 PostgreSQL·Redis·MongoDB CLIENT span을 같은 waterfall에서 보여줍니다. |
+| 요청 로그 | 같은 `trace_id`의 구조화 로그로 이동하기 위한 패널입니다. |
+
+서비스 추가 및 이름 규칙은 [SERVICE_OBSERVABILITY.md](SERVICE_OBSERVABILITY.md)를 참고하세요.
 
 ## PostgreSQL Deep Dive
 
@@ -63,7 +122,7 @@ Loki에는 trace/request ID처럼 값 종류가 많은 필드를 index label로 
 | Deadlock 및 Conflict | 최근 5분 증가량입니다. 0보다 크면 관련 transaction 순서와 lock을 조사합니다. |
 | PostgreSQL 로그 | checkpoint, authentication, statement error 같은 근거를 확인합니다. |
 
-상세 query 원문, lock holder PID, 실행 중 SQL은 metric label에 넣지 않습니다. 필요할 때 MCP `list_active_queries`, `long_running_transactions`, `list_locks`, `list_query_stats`를 호출합니다.
+상세 query 원문, lock holder PID, 실행 중 SQL은 metric label에 넣지 않습니다. 필요할 때 MCP `list_active_queries`, `long_running_transactions`, `list_locks`를 명시적으로 호출합니다.
 
 ### PostgreSQL Lock Mode 읽는 법
 
@@ -82,26 +141,6 @@ Loki에는 trace/request ID처럼 값 종류가 많은 필드를 index label로 
 | `SIReadLock` | `SERIALIZABLE` predicate read | blocking lock이 아니라 직렬화 충돌을 판정하기 위한 predicate lock입니다. |
 
 row lock 대기는 `transactionid` 또는 `tuple` lock으로 보일 수 있고 panel의 relation mode 합계만으로 holder를 특정할 수 없습니다. `make demo-postgres-lock` 실행 중 MCP `list_locks` 또는 `pg_stat_activity.wait_event_type = 'Lock'`을 함께 확인하세요.
-
-## Selected Query Performance
-
-`queryid` allowlist에 들어간 PostgreSQL query만 표시합니다.
-
-| Panel | 의미와 해석 |
-|---|---|
-| 수집 중인 Query ID | 현재 Prometheus에 보이는 allowlist query 개수입니다. |
-| 선택 Query 호출률 | allowlist 전체의 초당 실행 수입니다. |
-| 평균 실행시간 | 누적 실행시간 증가율 / 호출 증가율입니다. p95가 아니라 5분 평균입니다. |
-| 처리 Row/s | query가 반환하거나 처리한 row 증가율입니다. |
-| Block Read 시간률 | query가 block read에 소비한 시간의 증가율입니다. I/O 병목 단서입니다. |
-| 느린 Query Alert | 1초 평균 임계값을 넘겨 firing 중인 alert 수입니다. |
-| Query ID별 호출률 | 어떤 query가 트래픽을 차지하는지 비교합니다. |
-| Query ID별 평균 실행시간 | query별 평균 latency 추세입니다. |
-| Query ID별 Rows/Call | 한 호출이 처리하는 row 규모입니다. 급증하면 조건 선택도 변화를 확인합니다. |
-| Query ID별 Block I/O 시간률 | query별 read/write block I/O 시간입니다. |
-| 관련 로그 | query 악화 시 Toolbox/PostgreSQL 로그를 같은 시간대에 봅니다. |
-
-정확한 p95/p99는 `pg_stat_statements` 누적 counter만으로 계산할 수 없습니다. 분포가 필요하면 애플리케이션 OTel DB span histogram을 추가합니다.
 
 ## Redis Deep Dive
 

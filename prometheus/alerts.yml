@@ -7,34 +7,22 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: PostgreSQL exporter cannot reach the database
+          summary: PostgreSQL {{ $labels.db_instance }} exporter cannot reach the database
 
       - alert: PostgreSQLConnectionsHigh
-        expr: sum(pg_stat_database_numbackends{datname!~"template.*"}) > 80
+        expr: sum by (db_instance) (pg_stat_database_numbackends{datname!~"template.*"}) > 80
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: PostgreSQL connections exceed the local stack threshold
+          summary: PostgreSQL {{ $labels.db_instance }} connections exceed the local stack threshold
 
       - alert: PostgreSQLDeadlockDetected
-        expr: sum(increase(pg_stat_database_deadlocks{datname!~"template.*"}[5m])) > 0
+        expr: sum by (db_instance) (increase(pg_stat_database_deadlocks{datname!~"template.*"}[5m])) > 0
         labels:
           severity: warning
         annotations:
-          summary: A PostgreSQL deadlock occurred in the last five minutes
-
-      - alert: PostgreSQLSelectedQueryAverageLatencyHigh
-        expr: |
-          sum by (queryid) (rate(pg_stat_statements_seconds_total{job="postgres",query_scope="selected"}[5m]))
-          /
-          clamp_min(sum by (queryid) (rate(pg_stat_statements_calls_total{job="postgres",query_scope="selected"}[5m])), 1e-9)
-          > 1
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: Selected PostgreSQL query {{ $labels.queryid }} averages above one second
+          summary: PostgreSQL {{ $labels.db_instance }} had a deadlock in the last five minutes
 
       - alert: RedisDown
         expr: redis_up == 0
@@ -42,7 +30,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: Redis exporter cannot reach the database
+          summary: Redis {{ $labels.db_instance }} exporter cannot reach the database
 
       - alert: RedisMemoryHigh
         expr: redis_memory_max_bytes > 0 and redis_memory_used_bytes / redis_memory_max_bytes > 0.8
@@ -50,7 +38,7 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: Redis memory usage is above 80 percent of maxmemory
+          summary: Redis {{ $labels.db_instance }} memory usage is above 80 percent of maxmemory
 
       - alert: MongoDBDown
         expr: mongodb_up == 0
@@ -58,7 +46,7 @@ groups:
         labels:
           severity: critical
         annotations:
-          summary: MongoDB exporter cannot reach the database
+          summary: MongoDB {{ $labels.db_instance }} exporter cannot reach the database
 
   - name: toolbox-health
     rules:

@@ -1,0 +1,117 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {"asDropdown": false, "icon": "arrow-left", "includeVars": false, "keepTime": true, "tags": [], "targetBlank": false, "title": "Multi-DB Overview", "type": "link", "url": "/d/mcp-toolbox-multidb"},
+    {"asDropdown": false, "icon": "external link", "includeVars": false, "keepTime": true, "tags": [], "targetBlank": true, "title": "Jaeger", "type": "link", "url": "http://127.0.0.1:16686"}
+  ],
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}, "id": 1,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "sum(rate(app_http_server_request_count_total{service_name=~\"$service\"}[5m])) or vector(0)", "legendFormat": "requests/s", "range": true, "refId": "A"}],
+      "title": "요청률", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}, "id": 2,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le) (rate(app_http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[5m]))) or vector(0)", "legendFormat": "p95", "range": true, "refId": "A"}],
+      "title": "HTTP p95", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}, "id": 3,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "sum(rate(app_http_server_request_count_total{service_name=~\"$service\",http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(app_http_server_request_count_total{service_name=~\"$service\"}[5m])), 1e-9) or vector(0)", "legendFormat": "5xx", "range": true, "refId": "A"}],
+      "title": "오류율", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}, "id": 4,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le) (rate(app_db_client_operation_duration_seconds_bucket{service_name=~\"$service\"}[5m]))) or vector(0)", "legendFormat": "p95", "range": true, "refId": "A"}],
+      "title": "DB 작업 p95", "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}, "id": 5,
+      "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"editorMode": "code", "expr": "sum by (http_route) (rate(app_http_server_request_count_total{service_name=~\"$service\"}[5m]))", "legendFormat": "{{http_route}}", "range": true, "refId": "A"}],
+      "title": "라우트별 요청률", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}, "id": 6,
+      "options": {"legend": {"calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le, http_route) (rate(app_http_server_request_duration_seconds_bucket{service_name=~\"$service\"}[5m])))", "legendFormat": "{{http_route}}", "range": true, "refId": "A"}],
+      "title": "라우트별 HTTP p95", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 12}, "id": 7,
+      "options": {"legend": {"calcs": ["mean", "lastNotNull", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"editorMode": "code", "expr": "histogram_quantile(0.95, sum by (le, db_system_name, db_operation_name, db_query_summary) (rate(app_db_client_operation_duration_seconds_bucket{service_name=~\"$service\"}[5m])))", "legendFormat": "{{db_system_name}} · {{db_operation_name}} · {{db_query_summary}}", "range": true, "refId": "A"}],
+      "title": "DB별·작업별 p95", "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "jaeger", "uid": "jaeger"},
+      "fieldConfig": {"defaults": {}, "overrides": []},
+      "gridPos": {"h": 9, "w": 24, "x": 0, "y": 21}, "id": 8,
+      "options": {"cellHeight": "sm", "showHeader": true},
+      "targets": [{"datasource": {"type": "jaeger", "uid": "jaeger"}, "limit": 50, "maxDuration": "", "minDuration": "", "operation": "", "queryType": "search", "refId": "A", "service": "$service", "tags": ""}],
+      "title": "최근 요청 Trace — HTTP → DB span", "type": "table"
+    },
+    {
+      "datasource": {"type": "loki", "uid": "loki"},
+      "gridPos": {"h": 8, "w": 24, "x": 0, "y": 30}, "id": 9,
+      "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": false, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true},
+      "targets": [{"editorMode": "code", "expr": "{service=~\"$service\"} | json | event=\"request.complete\" | line_format \"trace_id={{.trace_id}} route={{.route}} status={{.status}} duration_ms={{.duration_ms}}\"", "queryType": "range", "refId": "A"}],
+      "title": "요청 로그 — Trace ID 클릭", "type": "logs"
+    },
+    {
+      "gridPos": {"h": 6, "w": 24, "x": 0, "y": 38}, "id": 10,
+      "options": {"code": {"language": "plaintext", "showLineNumbers": false, "showMiniMap": false}, "content": "service.name으로 논리 서비스를 구분하고 service.namespace로 시스템을 묶습니다. HTTP route와 db.query.summary에는 실제 ID나 SQL 원문을 넣지 않습니다. 느린 라우트를 고른 뒤 Trace를 열면 PostgreSQL·Redis·MongoDB client span의 실행시간을 한 요청 안에서 비교할 수 있습니다.", "mode": "markdown"},
+      "title": "읽는 방법", "type": "text"
+    }
+  ],
+  "refresh": "15s",
+  "schemaVersion": 41,
+  "tags": ["application", "services", "opentelemetry", "database", "traces"],
+  "templating": {
+    "list": [
+      {
+        "current": {"selected": false, "text": "demo-api", "value": "demo-api"},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values(app_http_server_request_count_total, service_name)",
+        "includeAll": false,
+        "label": "Service",
+        "multi": false,
+        "name": "service",
+        "options": [],
+        "query": {"query": "label_values(app_http_server_request_count_total, service_name)", "refId": "StandardVariableQuery"},
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {"from": "now-1h", "to": "now"},
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Application / Service & DB Tracing",
+  "uid": "application-service-db-tracing",
+  "version": 1,
+  "weekStart": ""
+}

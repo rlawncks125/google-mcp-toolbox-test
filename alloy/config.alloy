@@ -16,6 +16,41 @@ discovery.relabel "observed_containers" {
     target_label  = "service"
   }
 
+  // Applications can keep the Loki service label identical to OTel
+  // service.name even when the Compose service key is different.
+  rule {
+    source_labels = ["__meta_docker_container_label_observability_service_name"]
+    regex         = "(.+)"
+    replacement   = "$1"
+    target_label  = "service"
+  }
+
+  // Stable database identity labels keep logs from multiple instances separate.
+  rule {
+    source_labels = ["__meta_docker_container_label_observability_db_system"]
+    target_label  = "db_system"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_observability_db_cluster"]
+    target_label  = "db_cluster"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_observability_db_instance"]
+    target_label  = "db_instance"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_observability_db_role"]
+    target_label  = "db_role"
+  }
+
+  rule {
+    source_labels = ["__meta_docker_container_label_observability_environment"]
+    target_label  = "environment"
+  }
+
   rule {
     source_labels = ["__meta_docker_container_label_com_docker_compose_project"]
     target_label  = "compose_project"
@@ -46,6 +81,13 @@ loki.process "container_logs" {
       request_latency = "httpRequest.latency",
       http_status     = "httpRequest.status",
       request_path    = "httpRequest.requestPath",
+    }
+  }
+
+  stage.json {
+    expressions = {
+      trace_id = "trace_id",
+      span_id  = "span_id",
     }
   }
 

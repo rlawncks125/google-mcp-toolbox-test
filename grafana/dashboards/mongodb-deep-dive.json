@@ -10,7 +10,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "mappings": [{"options": {"0": {"color": "red", "text": "DOWN"}, "1": {"color": "green", "text": "UP"}}, "type": "value"}], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "green", "value": 1}]}}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 0, "y": 0}, "id": 1,
       "options": {"colorMode": "background", "graphMode": "none", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "max(mongodb_up)", "legendFormat": "MongoDB", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "max(mongodb_up{db_instance=~\"$db_instance\"})", "legendFormat": "MongoDB", "range": true, "refId": "A"}],
       "title": "상태", "type": "stat"
     },
     {
@@ -18,7 +18,7 @@
       "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 4, "y": 0}, "id": 2,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "mongodb_ss_connections{conn_type=\"current\"}", "legendFormat": "connections", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "mongodb_ss_connections{db_instance=~\"$db_instance\",conn_type=\"current\"}", "legendFormat": "connections", "range": true, "refId": "A"}],
       "title": "현재 연결", "type": "stat"
     },
     {
@@ -26,7 +26,7 @@
       "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 8, "y": 0}, "id": 3,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "sum(rate(mongodb_op_counters_total[5m]))", "legendFormat": "operations/s", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(rate(mongodb_op_counters_total{db_instance=~\"$db_instance\"}[5m]))", "legendFormat": "operations/s", "range": true, "refId": "A"}],
       "title": "Operation/s", "type": "stat"
     },
     {
@@ -34,7 +34,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 10000}, {"color": "red", "value": 100000}]}, "unit": "µs"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 12, "y": 0}, "id": 4,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "sum(rate(mongodb_mongod_op_latencies_latency_total[5m])) / clamp_min(sum(rate(mongodb_mongod_op_latencies_ops_total[5m])), 1e-9)", "legendFormat": "average", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum(rate(mongodb_mongod_op_latencies_latency_total{db_instance=~\"$db_instance\"}[5m])) / clamp_min(sum(rate(mongodb_mongod_op_latencies_ops_total{db_instance=~\"$db_instance\"}[5m])), 1e-9)", "legendFormat": "average", "range": true, "refId": "A"}],
       "title": "평균 Operation 지연", "type": "stat"
     },
     {
@@ -42,7 +42,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 10}]}, "unit": "short"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 16, "y": 0}, "id": 5,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "mongodb_ss_transactions_currentOpen", "legendFormat": "open", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "mongodb_ss_transactions_currentOpen{db_instance=~\"$db_instance\"}", "legendFormat": "open", "range": true, "refId": "A"}],
       "title": "열린 Transaction", "type": "stat"
     },
     {
@@ -50,7 +50,7 @@
       "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 1}, {"color": "red", "value": 10}]}, "unit": "short"}, "overrides": []},
       "gridPos": {"h": 4, "w": 4, "x": 20, "y": 0}, "id": 6,
       "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
-      "targets": [{"editorMode": "code", "expr": "mongodb_mongod_global_lock_current_queue{type=\"total\"}", "legendFormat": "queued", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "mongodb_mongod_global_lock_current_queue{db_instance=~\"$db_instance\",type=\"total\"}", "legendFormat": "queued", "range": true, "refId": "A"}],
       "title": "Lock 대기 Queue", "type": "stat"
     },
     {
@@ -58,7 +58,7 @@
       "fieldConfig": {"defaults": {"unit": "ops"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}, "id": 7,
       "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "sum by (type) (rate(mongodb_op_counters_total[5m]))", "legendFormat": "{{type}}", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum by (type) (rate(mongodb_op_counters_total{db_instance=~\"$db_instance\"}[5m]))", "legendFormat": "{{type}}", "range": true, "refId": "A"}],
       "title": "Operation 유형별 처리율", "type": "timeseries"
     },
     {
@@ -66,7 +66,7 @@
       "fieldConfig": {"defaults": {"unit": "µs"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}, "id": 8,
       "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "sum by (type) (rate(mongodb_mongod_op_latencies_latency_total[5m])) / clamp_min(sum by (type) (rate(mongodb_mongod_op_latencies_ops_total[5m])), 1e-9)", "legendFormat": "{{type}}", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "sum by (type) (rate(mongodb_mongod_op_latencies_latency_total{db_instance=~\"$db_instance\"}[5m])) / clamp_min(sum by (type) (rate(mongodb_mongod_op_latencies_ops_total{db_instance=~\"$db_instance\"}[5m])), 1e-9)", "legendFormat": "{{type}}", "range": true, "refId": "A"}],
       "title": "Operation 유형별 평균 지연", "type": "timeseries"
     },
     {
@@ -75,9 +75,9 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}, "id": 9,
       "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "rate(mongodb_ss_transactions_totalCommitted[5m])", "legendFormat": "committed", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "rate(mongodb_ss_transactions_totalAborted[5m])", "legendFormat": "aborted", "range": true, "refId": "B"},
-        {"editorMode": "code", "expr": "rate(mongodb_ss_transactions_totalStarted[5m])", "legendFormat": "started", "range": true, "refId": "C"}
+        {"editorMode": "code", "expr": "rate(mongodb_ss_transactions_totalCommitted{db_instance=~\"$db_instance\"}[5m])", "legendFormat": "committed", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "rate(mongodb_ss_transactions_totalAborted{db_instance=~\"$db_instance\"}[5m])", "legendFormat": "aborted", "range": true, "refId": "B"},
+        {"editorMode": "code", "expr": "rate(mongodb_ss_transactions_totalStarted{db_instance=~\"$db_instance\"}[5m])", "legendFormat": "started", "range": true, "refId": "C"}
       ],
       "title": "Application Transaction 처리율", "type": "timeseries"
     },
@@ -87,9 +87,9 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}, "id": 10,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "mongodb_ss_transactions_currentActive", "legendFormat": "active", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "mongodb_ss_transactions_currentInactive", "legendFormat": "inactive", "range": true, "refId": "B"},
-        {"editorMode": "code", "expr": "mongodb_ss_transactions_currentPrepared", "legendFormat": "prepared", "range": true, "refId": "C"}
+        {"editorMode": "code", "expr": "mongodb_ss_transactions_currentActive{db_instance=~\"$db_instance\"}", "legendFormat": "active", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "mongodb_ss_transactions_currentInactive{db_instance=~\"$db_instance\"}", "legendFormat": "inactive", "range": true, "refId": "B"},
+        {"editorMode": "code", "expr": "mongodb_ss_transactions_currentPrepared{db_instance=~\"$db_instance\"}", "legendFormat": "prepared", "range": true, "refId": "C"}
       ],
       "title": "현재 Transaction 상태", "type": "timeseries"
     },
@@ -99,8 +99,8 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20}, "id": 11,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_concurrent_transactions_available_tickets", "legendFormat": "{{txn_rw}} available", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_concurrent_transactions_out_tickets", "legendFormat": "{{txn_rw}} in use", "range": true, "refId": "B"}
+        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_concurrent_transactions_available_tickets{db_instance=~\"$db_instance\"}", "legendFormat": "{{txn_rw}} available", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_concurrent_transactions_out_tickets{db_instance=~\"$db_instance\"}", "legendFormat": "{{txn_rw}} in use", "range": true, "refId": "B"}
       ],
       "title": "WiredTiger Transaction Tickets", "type": "timeseries"
     },
@@ -110,9 +110,9 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}, "id": 12,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_cache_bytes{type=\"total\"}", "legendFormat": "cache used", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_cache_max_bytes", "legendFormat": "cache max", "range": true, "refId": "B"},
-        {"editorMode": "code", "expr": "mongodb_ss_mem_resident * 1024 * 1024", "legendFormat": "resident memory", "range": true, "refId": "C"}
+        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_cache_bytes{db_instance=~\"$db_instance\",type=\"total\"}", "legendFormat": "cache used", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_cache_max_bytes{db_instance=~\"$db_instance\"}", "legendFormat": "cache max", "range": true, "refId": "B"},
+        {"editorMode": "code", "expr": "mongodb_ss_mem_resident{db_instance=~\"$db_instance\"} * 1024 * 1024", "legendFormat": "resident memory", "range": true, "refId": "C"}
       ],
       "title": "WiredTiger Cache 및 Resident Memory", "type": "timeseries"
     },
@@ -122,8 +122,8 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28}, "id": 13,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "mongodb_mongod_global_lock_current_queue{type=~\"reader|writer\"}", "legendFormat": "{{type}} queue", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_concurrent_transactions_out_tickets", "legendFormat": "{{txn_rw}} tickets", "range": true, "refId": "B"}
+        {"editorMode": "code", "expr": "mongodb_mongod_global_lock_current_queue{db_instance=~\"$db_instance\",type=~\"reader|writer\"}", "legendFormat": "{{type}} queue", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "mongodb_mongod_wiredtiger_concurrent_transactions_out_tickets{db_instance=~\"$db_instance\"}", "legendFormat": "{{txn_rw}} tickets", "range": true, "refId": "B"}
       ],
       "title": "Lock Queue 및 사용 중 Ticket", "type": "timeseries"
     },
@@ -133,9 +133,9 @@
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28}, "id": 14,
       "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "mongodb_dbstats_dataSize", "legendFormat": "{{database}} data", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "mongodb_dbstats_indexSize", "legendFormat": "{{database}} index", "range": true, "refId": "B"},
-        {"editorMode": "code", "expr": "mongodb_dbstats_storageSize", "legendFormat": "{{database}} storage", "range": true, "refId": "C"}
+        {"editorMode": "code", "expr": "mongodb_dbstats_dataSize{db_instance=~\"$db_instance\"}", "legendFormat": "{{database}} data", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "mongodb_dbstats_indexSize{db_instance=~\"$db_instance\"}", "legendFormat": "{{database}} index", "range": true, "refId": "B"},
+        {"editorMode": "code", "expr": "mongodb_dbstats_storageSize{db_instance=~\"$db_instance\"}", "legendFormat": "{{database}} storage", "range": true, "refId": "C"}
       ],
       "title": "Database 저장공간", "type": "timeseries"
     },
@@ -145,8 +145,8 @@
       "gridPos": {"h": 8, "w": 12, "x": 0, "y": 36}, "id": 15,
       "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
       "targets": [
-        {"editorMode": "code", "expr": "sum by (state) (rate(mongodb_mongod_metrics_document_total[5m]))", "legendFormat": "documents {{state}}", "range": true, "refId": "A"},
-        {"editorMode": "code", "expr": "sum by (state) (rate(mongodb_mongod_metrics_operation_total[5m]))", "legendFormat": "{{state}}", "range": true, "refId": "B"}
+        {"editorMode": "code", "expr": "sum by (state) (rate(mongodb_mongod_metrics_document_total{db_instance=~\"$db_instance\"}[5m]))", "legendFormat": "documents {{state}}", "range": true, "refId": "A"},
+        {"editorMode": "code", "expr": "sum by (state) (rate(mongodb_mongod_metrics_operation_total{db_instance=~\"$db_instance\"}[5m]))", "legendFormat": "{{state}}", "range": true, "refId": "B"}
       ],
       "title": "Document 처리 및 Operation 이상", "type": "timeseries"
     },
@@ -155,21 +155,39 @@
       "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
       "gridPos": {"h": 8, "w": 12, "x": 12, "y": 36}, "id": 16,
       "options": {"legend": {"calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
-      "targets": [{"editorMode": "code", "expr": "rate(mongodb_network_metrics_num_requests_total[5m])", "legendFormat": "requests", "range": true, "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "rate(mongodb_network_metrics_num_requests_total{db_instance=~\"$db_instance\"}[5m])", "legendFormat": "requests", "range": true, "refId": "A"}],
       "title": "Network Request Rate", "type": "timeseries"
     },
     {
       "datasource": {"type": "loki", "uid": "loki"},
       "gridPos": {"h": 9, "w": 24, "x": 0, "y": 44}, "id": 17,
       "options": {"dedupStrategy": "none", "enableLogDetails": true, "prettifyLogMessage": true, "showCommonLabels": false, "showLabels": false, "showTime": true, "sortOrder": "Descending", "wrapLogMessage": true},
-      "targets": [{"editorMode": "code", "expr": "{service=\"mongodb\"}", "queryType": "range", "refId": "A"}],
+      "targets": [{"editorMode": "code", "expr": "{service=\"mongodb\",db_instance=~\"$db_instance\"}", "queryType": "range", "refId": "A"}],
       "title": "MongoDB 로그", "type": "logs"
     }
   ],
   "refresh": "15s",
   "schemaVersion": 41,
   "tags": ["mcp", "mongodb", "transactions", "wiredtiger", "deep-dive"],
-  "templating": {"list": []},
+  "templating": {
+    "list": [
+      {
+        "current": {"selected": false, "text": "mongodb-1", "value": "mongodb-1"},
+        "datasource": {"type": "prometheus", "uid": "prometheus"},
+        "definition": "label_values(mongodb_up, db_instance)",
+        "includeAll": false,
+        "label": "DB Instance",
+        "multi": false,
+        "name": "db_instance",
+        "options": [],
+        "query": {"query": "label_values(mongodb_up, db_instance)", "refId": "StandardVariableQuery"},
+        "refresh": 1,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "time": {"from": "now-6h", "to": "now"},
   "timepicker": {},
   "timezone": "browser",

@@ -1,3 +1,16 @@
+# MCP Toolbox 설정 파일입니다.
+# - source: 데이터베이스 접속 정보를 정의합니다.
+# - tool: source를 이용해 MCP 클라이언트가 호출할 수 있는 작업을 정의합니다.
+# 별도 toolset을 만들지 않아 모든 tool을 기본 /mcp endpoint에 노출합니다.
+# Prometheus exporter와 Grafana 대시보드는 이 파일이 아닌 각각의 설정에서 관리합니다.
+# 같은 종류의 DB를 추가할 때는 source와 tool 이름을 전역에서 고유하게 지정합니다.
+# 예: orders-postgres / analytics-postgres, orders_postgres_list_locks
+
+# -----------------------------------------------------------------------------
+# Sources — 데이터베이스 연결
+# -----------------------------------------------------------------------------
+
+# PostgreSQL 모니터링용 읽기 전용 연결입니다.
 kind: source
 name: monitored-postgres
 type: postgres
@@ -8,9 +21,24 @@ user: ${TOOLBOX_DB_USER}
 password: ${TOOLBOX_DB_PASSWORD}
 queryParams:
   sslmode: ${DB_SSLMODE:disable}
-sqlCommenter: true
+  application_name: mcp-toolbox
 connectTimeout: 5
 ---
+# demo.orders 행 조회 전용 연결입니다. orders_reader의 DB 권한으로 읽기 전용을 강제합니다.
+kind: source
+name: orders-readonly-postgres
+type: postgres
+host: ${DB_HOST:postgres}
+port: ${DB_PORT:5432}
+database: ${DB_NAME:app}
+user: ${ORDERS_READER_USER}
+password: ${ORDERS_READER_PASSWORD}
+queryParams:
+  sslmode: ${DB_SSLMODE:disable}
+  application_name: mcp-toolbox-orders-readonly
+connectTimeout: 5
+---
+# Redis 상태 조회용 연결입니다.
 kind: source
 name: monitored-redis
 type: redis
@@ -18,17 +46,24 @@ address:
   - ${REDIS_HOST:redis}:${REDIS_PORT:6379}
 password: ${REDIS_PASSWORD}
 ---
+# MongoDB 상태 조회용 연결입니다.
 kind: source
 name: monitored-mongodb
 type: mongodb
 uri: mongodb://${MONGO_TOOLBOX_USER}:${MONGO_TOOLBOX_PASSWORD}@${MONGO_HOST:mongodb}:${MONGO_PORT:27017}/admin?authSource=admin
 ---
+# -----------------------------------------------------------------------------
+# PostgreSQL tools — 연결, transaction, lock, table 상태 조회
+# -----------------------------------------------------------------------------
+
 kind: tool
 name: database_overview
 type: postgres-database-overview
 source: monitored-postgres
 description: 현재 PostgreSQL 버전, 가동 시간, 복제 여부와 연결 사용률을 조회합니다.
 ---
+# 상시 쿼리 수집 기능이 아닙니다. 이 tool을 명시적으로 호출할 때만
+# 현재 실행 중인 SQL과 대기 이벤트가 MCP 응답에 포함됩니다.
 kind: tool
 name: list_active_queries
 type: postgres-list-active-queries
@@ -54,17 +89,114 @@ source: monitored-postgres
 description: 데이터베이스별 연결, 커밋, 롤백, 블록 읽기와 캐시 적중 통계를 조회합니다.
 ---
 kind: tool
-name: list_query_stats
-type: postgres-list-query-stats
-source: monitored-postgres
-description: pg_stat_statements에서 누적 실행 시간이 큰 쿼리를 조회합니다.
----
-kind: tool
 name: list_table_stats
 type: postgres-list-table-stats
 source: monitored-postgres
 description: 테이블별 스캔, 변경 행, vacuum 및 analyze 통계를 조회합니다.
 ---
+# 테스트/개발용 schema 탐색과 범용 read-only SQL 실행 도구입니다.
+# execute_query의 description과 annotation은 안내용이며, 실제 쓰기 차단은
+# monitored-postgres가 사용하는 toolbox_reader의 PostgreSQL 권한이 강제합니다.
+kind: tool
+name: list_tables
+type: postgres-list-tables
+source: monitored-postgres
+description: 사용자 schema의 테이블, 컬럼, constraint와 index 정보를 조회합니다.
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+  idempotentHint: true
+  openWorldHint: false
+---
+kind: tool
+name: execute_query
+type: postgres-execute-sql
+source: monitored-postgres
+description: 테스트 전용 범용 SQL 조회 도구입니다. SELECT, WITH SELECT, EXPLAIN, SHOW만 실행하고 결과가 많은 조회에는 반드시 LIMIT을 사용하세요. 쓰기, DDL, DCL은 시도하지 마세요.
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+  idempotentHint: true
+  openWorldHint: false
+---
+# -----------------------------------------------------------------------------
+# Orders read-only tools — demo.orders의 허용된 컬럼만 제한적으로 조회
+# -----------------------------------------------------------------------------
+
+kind: tool
+name: get_order_by_id
+type: postgres-sql
+source: orders-readonly-postgres
+description: 주문 ID 하나로 주문의 id, customer_name, total_cents, status, created_at을 조회합니다.
+statement: |
+  SELECT id, customer_name, total_cents, status, created_at
+  FROM demo.orders
+  WHERE id = $1
+parameters:
+  - name: order_id
+    type: integer
+    description: 조회할 주문 ID입니다.
+    minValue: 1
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+  idempotentHint: true
+  openWorldHint: false
+---
+kind: tool
+name: list_recent_orders
+type: postgres-sql
+source: orders-readonly-postgres
+description: 최근 주문을 최신순으로 조회합니다. 최대 100건까지만 반환합니다.
+statement: |
+  SELECT id, customer_name, total_cents, status, created_at
+  FROM demo.orders
+  ORDER BY created_at DESC, id DESC
+  LIMIT $1
+parameters:
+  - name: limit
+    type: integer
+    description: 반환할 주문 수입니다. 기본 20건, 최대 100건입니다.
+    default: 20
+    minValue: 1
+    maxValue: 100
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+  idempotentHint: true
+  openWorldHint: false
+---
+kind: tool
+name: find_orders_by_customer
+type: postgres-sql
+source: orders-readonly-postgres
+description: 정확히 일치하는 customer_name의 주문을 최신순으로 조회합니다. 최대 100건까지만 반환합니다.
+statement: |
+  SELECT id, customer_name, total_cents, status, created_at
+  FROM demo.orders
+  WHERE customer_name = $1
+  ORDER BY created_at DESC, id DESC
+  LIMIT $2
+parameters:
+  - name: customer_name
+    type: string
+    description: 정확히 일치시킬 고객 이름입니다.
+  - name: limit
+    type: integer
+    description: 반환할 주문 수입니다. 기본 20건, 최대 100건입니다.
+    default: 20
+    minValue: 1
+    maxValue: 100
+annotations:
+  readOnlyHint: true
+  destructiveHint: false
+  idempotentHint: true
+  openWorldHint: false
+---
+# -----------------------------------------------------------------------------
+# Redis tools — 서버, memory, command 지연 상태 조회
+# -----------------------------------------------------------------------------
+
 kind: tool
 name: redis_overview
 type: redis
@@ -108,6 +240,10 @@ annotations:
 commands:
   - [LATENCY, LATEST]
 ---
+# -----------------------------------------------------------------------------
+# MongoDB tools — 예제 health event 조회와 집계
+# -----------------------------------------------------------------------------
+
 kind: tool
 name: mongo_recent_health_events
 type: mongodb-find
@@ -115,7 +251,7 @@ source: monitored-mongodb
 description: MongoDB에 기록된 최근 상태 이벤트를 조회합니다.
 database: ${MONGO_DATABASE:app}
 collection: health_events
-filterPayload: '{}'
+filterPayload: "{}"
 sortPayload: '{"createdAt":-1}'
 limit: 20
 ---
@@ -129,19 +265,3 @@ collection: health_events
 readOnly: true
 pipelinePayload: '[{"$group":{"_id":"$status","count":{"$sum":1}}},{"$sort":{"count":-1}}]'
 pipelineParams: []
----
-kind: toolset
-name: db-observability
-tools:
-  - database_overview
-  - list_active_queries
-  - long_running_transactions
-  - list_locks
-  - list_database_stats
-  - list_query_stats
-  - list_table_stats
-  - redis_overview
-  - redis_slowlog
-  - redis_latency
-  - mongo_recent_health_events
-  - mongo_health_event_summary

@@ -17,27 +17,29 @@ scrape_configs:
   - job_name: postgres
     static_configs:
       - targets: ["postgres-exporter:9187"]
-    metric_relabel_configs:
-      # Query ID allowlist. The first ID belongs to examples/postgres/selected-query.sql.
-      # Replace it or add IDs separated by |, for example:
-      # regex: 'pg_stat_statements_.+;(-123456789|987654321)'
-      - source_labels: [__name__, queryid]
-        separator: ";"
-        regex: 'pg_stat_statements_.+;(7814683544229287637)'
-        target_label: query_scope
-        replacement: selected
-        action: replace
-      # Drop every non-allowlisted pg_stat_statements series while retaining
-      # ordinary PostgreSQL metrics in this single scrape job.
-      - source_labels: [__name__, query_scope]
-        separator: ";"
-        regex: 'pg_stat_statements_.+;'
-        action: drop
+        labels:
+          db_system: postgresql
+          db_cluster: local
+          db_instance: postgres-1
+          db_role: primary
+          environment: local
 
   - job_name: redis
     static_configs:
       - targets: ["redis-exporter:9121"]
+        labels:
+          db_system: redis
+          db_cluster: local
+          db_instance: redis-1
+          db_role: primary
+          environment: local
 
   - job_name: mongodb
     static_configs:
       - targets: ["mongodb-exporter:9216"]
+        labels:
+          db_system: mongodb
+          db_cluster: local
+          db_instance: mongodb-1
+          db_role: primary
+          environment: local
